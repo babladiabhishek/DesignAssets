@@ -33,6 +33,47 @@ public struct DesignAssets {
         return nil
         #endif
     }
+    
+    // MARK: - Smart Appearance-Based Icon Access
+    
+    /// Returns the appropriate icon variant based on the current appearance (dark/light mode)
+    @available(iOS 13.0, macOS 10.15, *)
+    public static func adaptiveIcon(named baseName: String, in colorScheme: ColorScheme? = nil) -> Image? {
+        #if canImport(SwiftUI)
+        let isDarkMode: Bool
+        if let colorScheme = colorScheme {
+            isDarkMode = colorScheme == .dark
+        } else {
+            #if canImport(UIKit)
+            isDarkMode = UITraitCollection.current.userInterfaceStyle == .dark
+            #else
+            isDarkMode = false
+            #endif
+        }
+        
+        let iconName = isDarkMode ? "\(baseName)_negative" : "\(baseName)_original"
+        return Image(iconName, bundle: bundle)
+        #else
+        return nil
+        #endif
+    }
+    
+    /// Returns the appropriate UIImage variant based on the current appearance (dark/light mode)
+    public static func adaptiveUIImage(named baseName: String, in traitCollection: Any? = nil) -> Any? {
+        #if canImport(UIKit)
+        let isDarkMode: Bool
+        if let traitCollection = traitCollection as? UITraitCollection {
+            isDarkMode = traitCollection.userInterfaceStyle == .dark
+        } else {
+            isDarkMode = UITraitCollection.current.userInterfaceStyle == .dark
+        }
+        
+        let iconName = isDarkMode ? "\(baseName)_negative" : "\(baseName)_original"
+        return UIImage(named: iconName, in: bundle, compatibleWith: nil)
+        #else
+        return nil
+        #endif
+    }
 }
 
 // MARK: - IconName Enum
@@ -102,6 +143,24 @@ public extension DesignAssets {
         
         public var uiImage: Any? {
             return DesignAssets.uiImage(named: self.rawValue)
+        }
+        
+        // MARK: - Adaptive Icon Access
+        
+        /// Returns the base name for adaptive icon selection (e.g., "facebook" for both original and negative variants)
+        public var baseName: String {
+            return self.rawValue.replacingOccurrences(of: "_original", with: "").replacingOccurrences(of: "_negative", with: "")
+        }
+        
+        /// Returns the adaptive icon that changes based on dark/light mode
+        @available(iOS 13.0, macOS 10.15, *)
+        public func adaptiveImage(in colorScheme: ColorScheme? = nil) -> Image? {
+            return DesignAssets.adaptiveIcon(named: self.baseName, in: colorScheme)
+        }
+        
+        /// Returns the adaptive UIImage that changes based on dark/light mode
+        public func adaptiveUIImage(in traitCollection: Any? = nil) -> Any? {
+            return DesignAssets.adaptiveUIImage(named: self.baseName, in: traitCollection)
         }
     }
 }
