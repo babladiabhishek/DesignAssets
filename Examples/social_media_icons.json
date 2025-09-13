@@ -1,0 +1,99 @@
+{
+  "$metadata": {
+    "tokenSetOrder": [
+      "Social Media Icons"
+    ]
+  },
+  "Social Media Icons": {
+    "instagram_blue": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:456&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_instagram_blue",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "Instagram Blue social media icon"
+    },
+    "instagram_white": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:718&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_instagram_white",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "Instagram White social media icon"
+    },
+    "facebook_blue": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:260&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_facebook_blue",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "Facebook Blue social media icon"
+    },
+    "facebook_white": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:874&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_facebook_white",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "Facebook White social media icon"
+    },
+    "twitter_blue": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:523&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_twitter_blue",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "Twitter Blue social media icon"
+    },
+    "twitter_white": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:891&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_twitter_white",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "Twitter White social media icon"
+    },
+    "linkedin_blue": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:634&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_linkedin_blue",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "LinkedIn Blue social media icon"
+    },
+    "linkedin_white": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:745&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_linkedin_white",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "LinkedIn White social media icon"
+    },
+    "youtube_red": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:412&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_youtube_red",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "YouTube Red social media icon"
+    },
+    "youtube_white": {
+      "figmaUrl": "https://www.figma.com/design/p8IPbfKjR8KAKN4XqjvSVo/Social-Media-Icons--Community-?node-id=I1:567&p=f&t=z6G6nCOsSbnkQLss-0",
+      "assetName": "social_youtube_white",
+      "$type": "icon",
+      "size": 24,
+      "weight": "regular",
+      "renderingMode": "original",
+      "$description": "YouTube White social media icon"
+    }
+  }
+}
