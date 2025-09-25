@@ -17,11 +17,11 @@ let package = Package(
       capability: .command(
         intent: .custom(
           verb: "fetch-icons",
-          description: "Fetch icons from Figma API directly into Icons.xcassets"
+          description: "Supercharged Figma icon fetcher - downloads all icons from any Figma file"
         ),
         permissions: [
           // Explicitly declare we'll access network & write sources
-          .writeToPackageDirectory(reason: "Update Icons.xcassets with downloaded icons")
+          .writeToPackageDirectory(reason: "Download and organize icons from Figma into asset catalogs")
         ]
       )
     )
