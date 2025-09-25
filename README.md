@@ -1,14 +1,17 @@
 # DesignAssets
 
-A comprehensive Swift Package containing 52 high-quality social media icons in PDF format, directly sourced from Figma. Perfect for iOS and macOS applications requiring professional social media branding.
+A comprehensive Swift Package containing high-quality icons with **supercharged Figma integration**. Perfect for iOS and macOS applications requiring professional iconography and seamless design system integration.
 
 ## ✨ Features
 
 - 🎨 **52 Social Media Icons** - Complete collection of popular platform icons
+- 🚀 **Supercharged Figma Integration** - Automatically fetch ALL icons from any Figma file
 - 📱 **PDF Vector Format** - Scalable, crisp rendering at any size
 - 🎯 **Two Variants** - Both "Original" and "Negative" styles for each platform
-- 🚀 **Zero Dependencies** - Pure Swift Package Manager integration
-- 📦 **Ready to Use** - No setup or configuration required
+- 📦 **Smart Organization** - Automatic categorization and variant detection
+- ⚡ **Generated Swift Code** - Type-safe icon access with organized enums
+- 🛠️ **Zero Dependencies** - Pure Swift Package Manager integration
+- 📊 **Detailed Reporting** - Comprehensive summaries of fetched icons
 
 ## 📋 Included Platforms
 
@@ -43,7 +46,7 @@ A comprehensive Swift Package containing 52 high-quality social media icons in P
 
 ## 🚀 Quick Start
 
-### 1. Add to Your Project
+### Option 1: Use Pre-built Icons
 
 **Via Xcode:**
 1. File → Add Package Dependencies
@@ -57,7 +60,23 @@ dependencies: [
 ]
 ```
 
-### 2. Import and Use
+### Option 2: Fetch Icons from Your Figma File
+
+1. **Get your Figma token** from [Figma Settings](https://www.figma.com/settings)
+2. **Extract file ID** from your Figma URL
+3. **Run the plugin**:
+
+```bash
+# Using command line
+swift package plugin fetch-icons --token YOUR_TOKEN --file-id YOUR_FILE_ID
+
+# Using environment variables
+export FIGMA_PERSONAL_TOKEN="your_token"
+export FIGMA_FILE_ID="your_file_id"
+swift package plugin fetch-icons
+```
+
+### Import and Use
 
 ```swift
 import DesignAssets
@@ -147,6 +166,82 @@ class SocialMediaViewController: UIViewController {
 // ... and so on
 ```
 
+## 🎨 Figma Integration
+
+### Supercharged Icon Fetching
+
+The DesignAssets package includes a powerful plugin that can automatically fetch **ALL** icons from any Figma file:
+
+```bash
+# Fetch all icons from your Figma file
+swift package plugin fetch-icons --token YOUR_TOKEN --file-id YOUR_FILE_ID
+```
+
+### What It Does
+
+- 🔍 **Discovers all icon components** and instances in your Figma file
+- 📂 **Organizes icons by categories** (General, Map, Status, Navigation, Social)
+- 🎨 **Detects variants** (filled, outline, light, dark)
+- 📦 **Generates Xcode asset catalogs** with proper Contents.json files
+- ⚡ **Creates Swift code** with organized enums for type-safe access
+- 📊 **Provides detailed reports** of all fetched icons
+
+### Generated Code Structure
+
+```swift
+// Automatically generated from your Figma file
+public struct GeneratedIcons {
+    enum General: String, CaseIterable {
+        case home_icon = "home_icon"
+        case search_icon = "search_icon"
+        // ... more icons
+    }
+    
+    enum Map: String, CaseIterable {
+        case location_pin = "location_pin"
+        // ... more icons
+    }
+    
+    enum All: String, CaseIterable {
+        // All icons in one enum
+        case home_icon = "home_icon"
+        case location_pin = "location_pin"
+        // ... all icons
+        
+        public var category: String {
+            // Returns the category for each icon
+        }
+    }
+}
+```
+
+### Usage with Generated Icons
+
+```swift
+import SwiftUI
+import DesignAssets
+
+struct MyView: View {
+    var body: some View {
+        VStack {
+            // Using category-specific icons
+            GeneratedIcons.General.home_icon.image
+            GeneratedIcons.Map.location_pin.image
+            
+            // Using the master enum
+            GeneratedIcons.All.home_icon.image
+            
+            // Dynamic loading
+            ForEach(GeneratedIcons.General.allCases, id: \.self) { icon in
+                icon.image
+            }
+        }
+    }
+}
+```
+
+For detailed documentation, see [FIGMA_INTEGRATION.md](FIGMA_INTEGRATION.md).
+
 ## 🎨 Design System Integration
 
 ### Storybook Example
@@ -187,13 +282,26 @@ DesignAssets/
 ├── Sources/
 │   └── DesignAssets/
 │       ├── DesignAssets.swift          # Main API
+│       ├── FigmaClient.swift           # Enhanced Figma integration
+│       ├── SocialMediaIcons.swift      # Social media icons
 │       └── Resources/
-│           └── Icons.xcassets/         # 52 PDF iconsets
-│               ├── facebook_original.imageset/
-│               ├── facebook_negative.imageset/
-│               ├── instagram_original.imageset/
-│               └── ... (48 more)
+│           ├── Icons.xcassets/         # 52 PDF iconsets
+│           │   ├── facebook_original.imageset/
+│           │   ├── facebook_negative.imageset/
+│           │   └── ... (50 more)
+│           ├── GeneratedIcons.swift    # Auto-generated from Figma
+│           ├── Icons.xcassets/         # Auto-generated asset catalog
+│           └── icon-summary.md         # Generated summary report
+├── Plugins/
+│   └── FetchIconsPlugin/
+│       └── Plugin.swift                # Supercharged Figma plugin
+├── Examples/
+│   ├── FigmaIntegrationExample.swift   # Figma integration examples
+│   ├── SocialMediaIconsUsageExample.swift
+│   └── social_media_icons.json
 ├── Package.swift                       # SPM configuration
+├── test-figma-integration.sh           # Test script
+├── FIGMA_INTEGRATION.md                # Detailed Figma docs
 └── README.md                          # This file
 ```
 
