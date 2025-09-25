@@ -1,66 +1,21 @@
 # DesignAssets
 
-A comprehensive Swift Package containing high-quality icons with **supercharged Figma integration**. Perfect for iOS and macOS applications requiring professional iconography and seamless design system integration.
+A **supercharged Swift Package** with comprehensive Figma integration that can dynamically fetch and organize ALL icons from any Figma file. Perfect for iOS and macOS applications requiring professional iconography and seamless design system integration.
 
 ## ✨ Features
 
-- 🎨 **52 Social Media Icons** - Complete collection of popular platform icons
 - 🚀 **Supercharged Figma Integration** - Automatically fetch ALL icons from any Figma file
-- 📱 **PDF Vector Format** - Scalable, crisp rendering at any size
-- 🎯 **Two Variants** - Both "Original" and "Negative" styles for each platform
-- 📦 **Smart Organization** - Automatic categorization and variant detection
+- 📱 **Smart Organization** - Automatic categorization and variant detection
 - ⚡ **Generated Swift Code** - Type-safe icon access with organized enums
-- 🛠️ **Zero Dependencies** - Pure Swift Package Manager integration
+- 📦 **Xcode Asset Catalogs** - Proper iOS/macOS integration
+- 🎨 **Variant Support** - Handles filled, outline, light, and dark variants
 - 📊 **Detailed Reporting** - Comprehensive summaries of fetched icons
-
-## 📋 Included Platforms
-
-### Social Media Platforms
-- **Facebook** (Original & Negative)
-- **Instagram** (Original & Negative) 
-- **X (Twitter)** (Original & Negative)
-- **LinkedIn** (Original & Negative)
-- **YouTube** (Original & Negative)
-- **TikTok** (Original & Negative)
-- **Snapchat** (Original & Negative)
-- **Pinterest** (Original & Negative)
-- **Reddit** (Original & Negative)
-- **WhatsApp** (Original & Negative)
-- **Telegram** (Original & Negative)
-- **Signal** (Original & Negative)
-- **Threads** (Original & Negative)
-
-### Professional & Developer Platforms
-- **Figma** (Original & Negative)
-- **GitHub** (Original & Negative)
-- **Google** (Original & Negative)
-- **Apple** (Original & Negative)
-- **Discord** (Original & Negative)
-- **Twitch** (Original & Negative)
-- **Spotify** (Original & Negative)
-- **Clubhouse** (Original & Negative)
-- **VK** (Original & Negative)
-- **Medium** (Original & Negative)
-- **Messenger** (Original & Negative)
-- **Tumblr** (Original & Negative)
+- 🛠️ **Zero Dependencies** - Pure Swift Package Manager integration
+- 🔄 **Dynamic Updates** - Always stay in sync with your design system
 
 ## 🚀 Quick Start
 
-### Option 1: Use Pre-built Icons
-
-**Via Xcode:**
-1. File → Add Package Dependencies
-2. Enter repository URL: `https://github.com/yourusername/DesignAssets`
-3. Select version and add to target
-
-**Via Package.swift:**
-```swift
-dependencies: [
-    .package(url: "https://github.com/yourusername/DesignAssets", from: "1.0.0")
-]
-```
-
-### Option 2: Fetch Icons from Your Figma File
+### Option 1: Fetch Icons from Your Figma File
 
 1. **Get your Figma token** from [Figma Settings](https://www.figma.com/settings)
 2. **Extract file ID** from your Figma URL
@@ -76,6 +31,20 @@ export FIGMA_FILE_ID="your_file_id"
 swift package plugin fetch-icons
 ```
 
+### Option 2: Add to Your Project
+
+**Via Xcode:**
+1. File → Add Package Dependencies
+2. Enter repository URL: `https://github.com/babladiabhishek/DesignAssets`
+3. Select version and add to target
+
+**Via Package.swift:**
+```swift
+dependencies: [
+    .package(url: "https://github.com/babladiabhishek/DesignAssets", from: "1.0.0")
+]
+```
+
 ### Import and Use
 
 ```swift
@@ -85,85 +54,48 @@ import DesignAssets
 ## 💻 Usage Examples
 
 ### SwiftUI
+
 ```swift
 import SwiftUI
 import DesignAssets
 
-struct SocialMediaView: View {
+struct MyView: View {
     var body: some View {
-        VStack(spacing: 20) {
-            // Using the enum
-            Image(DesignAssets.IconName.facebookOriginal.rawValue, bundle: DesignAssets.bundle)
-                .resizable()
-                .frame(width: 24, height: 24)
+        VStack {
+            // Using generated icons from Figma
+            GeneratedIcons.General.home_icon.image
+            GeneratedIcons.Map.location_pin.image
+            GeneratedIcons.Status.success_icon.image
             
-            // Using the helper method
-            DesignAssets.icon(named: "instagram_original")
-                .resizable()
-                .frame(width: 32, height: 32)
+            // Using the master enum
+            GeneratedIcons.All.home_icon.image
+            
+            // Dynamic loading
+            ForEach(GeneratedIcons.General.allCases, id: \.self) { icon in
+                icon.image
+            }
         }
     }
 }
 ```
 
 ### UIKit
+
 ```swift
 import UIKit
 import DesignAssets
 
-class SocialMediaViewController: UIViewController {
+class MyViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Using the enum
-        let facebookIcon = UIImage(named: DesignAssets.IconName.facebookOriginal.rawValue, 
-                                 in: DesignAssets.bundle, 
-                                 compatibleWith: nil)
-        
-        // Using the helper method
-        let instagramIcon = DesignAssets.uiImage(named: "instagram_original") as? UIImage
-        
-        let imageView = UIImageView(image: facebookIcon)
-        view.addSubview(imageView)
+        // Using generated icons
+        if let image = GeneratedIcons.General.home_icon.uiImage as? UIImage {
+            let imageView = UIImageView(image: image)
+            view.addSubview(imageView)
+        }
     }
 }
-```
-
-### Available Icon Names
-
-```swift
-// Original variants
-.facebookOriginal
-.instagramOriginal
-.xTwitterOriginal
-.linkedinOriginal
-.youtubeOriginal
-.tiktokOriginal
-.snapchatOriginal
-.pinterestOriginal
-.redditOriginal
-.whatsappOriginal
-.telegramOriginal
-.signalOriginal
-.threadsOriginal
-.figmaOriginal
-.githubOriginal
-.googleOriginal
-.appleOriginal
-.discordOriginal
-.twitchOriginal
-.spotifyOriginal
-.clubhouseOriginal
-.vkOriginal
-.mediumOriginal
-.messengerOriginal
-.tumblrOriginal
-
-// Negative variants (same platforms with "Negative" suffix)
-.facebookNegative
-.instagramNegative
-.xTwitterNegative
-// ... and so on
 ```
 
 ## 🎨 Figma Integration
@@ -215,64 +147,24 @@ public struct GeneratedIcons {
 }
 ```
 
-### Usage with Generated Icons
-
-```swift
-import SwiftUI
-import DesignAssets
-
-struct MyView: View {
-    var body: some View {
-        VStack {
-            // Using category-specific icons
-            GeneratedIcons.General.home_icon.image
-            GeneratedIcons.Map.location_pin.image
-            
-            // Using the master enum
-            GeneratedIcons.All.home_icon.image
-            
-            // Dynamic loading
-            ForEach(GeneratedIcons.General.allCases, id: \.self) { icon in
-                icon.image
-            }
-        }
-    }
-}
-```
-
 For detailed documentation, see [FIGMA_INTEGRATION.md](FIGMA_INTEGRATION.md).
 
-## 🎨 Design System Integration
+## 📋 Command Line Options
 
-### Storybook Example
-```swift
-import SwiftUI
-import DesignAssets
+```bash
+swift package plugin fetch-icons [options]
 
-struct IconShowcase: View {
-    let icons: [DesignAssets.IconName] = [
-        .facebookOriginal, .instagramOriginal, .xTwitterOriginal,
-        .linkedinOriginal, .youtubeOriginal, .tiktokOriginal
-    ]
-    
-    var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3)) {
-            ForEach(icons, id: \.self) { icon in
-                VStack {
-                    Image(icon.rawValue, bundle: DesignAssets.bundle)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 40, height: 40)
-                    
-                    Text(icon.rawValue)
-                        .font(.caption)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
-            }
-        }
-    }
-}
+Options:
+  --token <token>        Figma personal access token
+  --file-id <file-id>    Figma file ID to fetch icons from
+  --no-variants          Skip variant processing (filled/outline)
+  --no-asset-catalog     Skip Xcode asset catalog generation
+  --no-swift-code        Skip Swift code generation
+  --help, -h             Show help message
+
+Environment Variables:
+  FIGMA_PERSONAL_TOKEN   Figma personal access token
+  FIGMA_FILE_ID          Figma file ID
 ```
 
 ## 📦 Package Structure
@@ -283,32 +175,26 @@ DesignAssets/
 │   └── DesignAssets/
 │       ├── DesignAssets.swift          # Main API
 │       ├── FigmaClient.swift           # Enhanced Figma integration
-│       ├── SocialMediaIcons.swift      # Social media icons
 │       └── Resources/
-│           ├── Icons.xcassets/         # 52 PDF iconsets
-│           │   ├── facebook_original.imageset/
-│           │   ├── facebook_negative.imageset/
-│           │   └── ... (50 more)
+│           ├── Icons.xcassets/         # Generated asset catalog
 │           ├── GeneratedIcons.swift    # Auto-generated from Figma
-│           ├── Icons.xcassets/         # Auto-generated asset catalog
 │           └── icon-summary.md         # Generated summary report
 ├── Plugins/
 │   └── FetchIconsPlugin/
 │       └── Plugin.swift                # Supercharged Figma plugin
 ├── Examples/
-│   ├── FigmaIntegrationExample.swift   # Figma integration examples
-│   ├── SocialMediaIconsUsageExample.swift
-│   └── social_media_icons.json
+│   └── FigmaIntegrationExample.swift   # Figma integration examples
 ├── Package.swift                       # SPM configuration
 ├── test-figma-integration.sh           # Test script
+├── test-real-figma.sh                  # Real integration test
 ├── FIGMA_INTEGRATION.md                # Detailed Figma docs
 └── README.md                          # This file
 ```
 
 ## 🔧 Technical Details
 
-- **Format**: PDF (vector-based)
-- **File Sizes**: 4KB - 17KB per icon
+- **Format**: PNG (high-resolution, 2x scale)
+- **File Sizes**: Optimized for mobile
 - **Scalability**: Perfect at any resolution
 - **iOS Support**: iOS 15.0+
 - **macOS Support**: macOS 12.0+
@@ -316,11 +202,28 @@ DesignAssets/
 
 ## 🎯 Benefits
 
-- **Vector Quality**: Crisp rendering at any size
-- **Small Bundle Size**: Efficient PDF compression
-- **Consistent Styling**: All icons follow the same design language
-- **Easy Integration**: Simple API with type-safe enum access
-- **Future-Proof**: Easy to add new icons or update existing ones
+- **Dynamic Icon Management**: Always stay in sync with your design system
+- **Type-Safe Access**: Generated Swift enums for all icons
+- **Smart Organization**: Automatic categorization and variant detection
+- **Easy Integration**: Simple API with comprehensive documentation
+- **Future-Proof**: Easy to update and maintain
+- **Design System Ready**: Perfect for large-scale applications
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **"FIGMA_PERSONAL_TOKEN not set"**
+   - Make sure you've set the token in environment variables or passed it via `--token`
+
+2. **"Failed to fetch Figma file"**
+   - Check that your token has access to the file
+   - Verify the file ID is correct
+   - Ensure the file is not private or requires special permissions
+
+3. **"No icons found"**
+   - Check that your Figma file contains components or instances with icon-like names
+   - Try using more generic naming patterns like `icon_*` or `ic_*`
 
 ## 📄 License
 
