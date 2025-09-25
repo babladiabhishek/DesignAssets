@@ -91,30 +91,41 @@ private func runFetch(context: some FetchContext, arguments: [String]) async thr
     try FileManager.default.createDirectory(at: URL(fileURLWithPath: outputDir.string), withIntermediateDirectories: true)
     
     do {
-        // For now, create a simplified implementation that demonstrates the structure
-        // In a real implementation, this would call the Figma API
         context.log("🚀 Starting Figma integration...")
         context.log("📁 File ID: \(fileId)")
         context.log("🔑 Token: \(String(token.prefix(10)))...")
         
-        // Simulate fetching icons (replace with actual Figma API calls)
-        let mockIcons = createMockIcons()
+        // Fetch real icons from Figma API
+        let icons = try await fetchIconsFromFigma(
+            fileId: fileId,
+            token: token,
+            outputDirectory: URL(fileURLWithPath: outputDir.string),
+            includeVariants: includeVariants,
+            generateAssetCatalog: generateAssetCatalog,
+            generateSwiftCode: generateSwiftCode
+        )
         
-        context.log("🎉 Successfully processed \(mockIcons.count) mock icons!")
-        context.log("📊 Categories: \(Set(mockIcons.map { $0.category }).sorted().joined(separator: ", "))")
+        context.log("🎉 Successfully processed \(icons.count) icons from Figma!")
+        context.log("📊 Categories: \(Set(icons.map { $0.category }).sorted().joined(separator: ", "))")
         
-        // Generate asset catalog if requested
-        if generateAssetCatalog {
-            try generateAssetCatalogFiles(icons: mockIcons, outputDirectory: URL(fileURLWithPath: outputDir.string))
-        }
-        
-        // Generate Swift code if requested
-        if generateSwiftCode {
-            try generateSwiftCodeFiles(icons: mockIcons, outputDirectory: URL(fileURLWithPath: outputDir.string))
+        // Convert FigmaIconInfo to plugin IconInfo for summary report
+        let pluginIcons = icons.map { figmaIcon in
+            IconInfo(
+                id: figmaIcon.id,
+                name: figmaIcon.name,
+                category: figmaIcon.category,
+                variant: figmaIcon.variant,
+                nodeId: figmaIcon.nodeId,
+                filePath: figmaIcon.filePath,
+                size: figmaIcon.size,
+                isComponent: figmaIcon.isComponent,
+                thumbnailUrl: figmaIcon.thumbnailUrl,
+                description: figmaIcon.description
+            )
         }
         
         // Generate summary report
-        generateSummaryReport(icons: mockIcons, outputPath: outputDir.appending(subpath: "icon-summary.md"))
+        generateSummaryReport(icons: pluginIcons, outputPath: outputDir.appending(subpath: "icon-summary.md"))
         
         context.log("✅ Integration completed successfully!")
         
@@ -397,6 +408,283 @@ private func generateSwiftCodeFiles(icons: [IconInfo], outputDirectory: URL) thr
     
     try swiftCode.write(to: swiftFile, atomically: true, encoding: .utf8)
     print("✅ Generated Swift code with \(icons.count) icons in \(groupedIcons.count) categories")
+}
+
+// MARK: - Figma API Implementation
+
+private func fetchIconsFromFigma(
+    fileId: String,
+    token: String,
+    outputDirectory: URL,
+    includeVariants: Bool,
+    generateAssetCatalog: Bool,
+    generateSwiftCode: Bool
+) async throws -> [FigmaIconInfo] {
+    print("🔄 Fetching icons from Figma file: \(fileId)")
+    
+    // First, get the file structure to find icon components
+    let fileData = try await getFigmaFile(fileId: fileId, token: token)
+    
+    // Find all components that look like icons
+    let iconComponents = findIconComponents(in: fileData)
+    
+    print("📱 Found \(iconComponents.count) icon components")
+    
+    // Download each icon
+    var downloadedIcons: [FigmaIconInfo] = []
+    
+    for component in iconComponents {
+        do {
+            let iconInfo = try await downloadIcon(
+                component: component,
+                fileId: fileId,
+                token: token,
+                outputDirectory: outputDirectory
+            )
+            downloadedIcons.append(iconInfo)
+            print("✅ Downloaded: \(iconInfo.name)")
+        } catch {
+            print("❌ Failed to download \(component.name): \(error.localizedDescription)")
+        }
+    }
+    
+    print("🎉 Icon download completed! Downloaded \(downloadedIcons.count) icons")
+    return downloadedIcons
+}
+
+// MARK: - Figma API Data Models
+
+struct FigmaFile: Codable {
+    let document: FigmaDocument
+    let components: [String: FigmaComponent]
+}
+
+struct FigmaDocument: Codable {
+    let children: [FigmaNode]
+}
+
+struct FigmaNode: Codable {
+    let id: String
+    let name: String
+    let type: String
+    let children: [FigmaNode]?
+}
+
+struct FigmaComponent: Codable {
+    let key: String
+    let name: String
+    let description: String?
+    let nodeId: String
+    
+    enum CodingKeys: String, CodingKey {
+        case key, name, description
+        case nodeId = "node_id"
+    }
+}
+
+struct FigmaIconInfo {
+    let id: String
+    let name: String
+    let category: String
+    let variant: String?
+    let nodeId: String
+    let filePath: String
+    let size: CGSize
+    let isComponent: Bool
+    let thumbnailUrl: String?
+    let description: String?
+}
+
+// MARK: - Figma API Methods
+    
+    private func getFigmaFile(fileId: String, token: String) async throws -> FigmaFile {
+        let url = URL(string: "https://api.figma.com/v1/files/\(fileId)")!
+        var request = URLRequest(url: url)
+        request.setValue(token, forHTTPHeaderField: "X-Figma-Token")
+        
+    let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw FigmaError.apiError("Failed to fetch Figma file")
+        }
+        
+        let decoder = JSONDecoder()
+        return try decoder.decode(FigmaFile.self, from: data)
+    }
+    
+    private func findIconComponents(in file: FigmaFile) -> [FigmaComponent] {
+        var iconComponents: [FigmaComponent] = []
+        
+        // Look for components that match icon naming patterns
+        for (_, component) in file.components {
+            let name = component.name.lowercased()
+            
+            // Check if it looks like an icon (starts with ic_ or contains icon keywords)
+            if name.hasPrefix("ic_") || 
+               name.contains("icon") || 
+               name.contains("social") ||
+               name.contains("facebook") ||
+               name.contains("twitter") ||
+               name.contains("instagram") ||
+               name.contains("linkedin") ||
+           name.contains("home") ||
+           name.contains("search") ||
+           name.contains("location") ||
+           name.contains("map") ||
+           name.contains("status") ||
+           name.contains("nav") ||
+           name.contains("ui") {
+                iconComponents.append(component)
+            }
+        }
+        
+        return iconComponents
+    }
+    
+    private func downloadIcon(
+        component: FigmaComponent,
+        fileId: String,
+        token: String,
+        outputDirectory: URL
+) async throws -> FigmaIconInfo {
+        // Get image URL from Figma API
+        let imageUrl = try await getFigmaImageUrl(
+            fileId: fileId,
+            nodeId: component.nodeId,
+            token: token
+        )
+        
+        // Download the image
+        let imageData = try await downloadImage(from: imageUrl)
+        
+        // Create asset name from component name
+        let assetName = sanitizeAssetName(component.name)
+    let category = determineCategory(from: component.name)
+    let variant = determineVariant(from: component.name)
+        
+        // Save as PNG
+        let fileName = "\(assetName).png"
+        let fileUrl = outputDirectory.appendingPathComponent(fileName)
+        try imageData.write(to: fileUrl)
+        
+    return FigmaIconInfo(
+        id: component.key,
+            name: assetName,
+        category: category,
+        variant: variant,
+            nodeId: component.nodeId,
+        filePath: fileUrl.path,
+        size: CGSize(width: 24, height: 24),
+        isComponent: true,
+        thumbnailUrl: nil,
+        description: component.description
+        )
+    }
+    
+    private func getFigmaImageUrl(fileId: String, nodeId: String, token: String) async throws -> String {
+        let url = URL(string: "https://api.figma.com/v1/images/\(fileId)")!
+        var request = URLRequest(url: url)
+        request.setValue(token, forHTTPHeaderField: "X-Figma-Token")
+        
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "ids", value: nodeId),
+            URLQueryItem(name: "format", value: "png"),
+        URLQueryItem(name: "scale", value: "2") // High resolution
+        ]
+        
+        request.url = components.url
+        
+    let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw FigmaError.apiError("Failed to get image URL from Figma API")
+        }
+        
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let images = json?["images"] as? [String: Any],
+              let imageUrl = images[nodeId] as? String else {
+            throw FigmaError.apiError("Invalid response from Figma API")
+        }
+        
+        return imageUrl
+    }
+    
+    private func downloadImage(from urlString: String) async throws -> Data {
+        guard let url = URL(string: urlString) else {
+            throw FigmaError.invalidUrl
+        }
+        
+    let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw FigmaError.downloadError("Failed to download image")
+        }
+        
+        return data
+    }
+    
+    private func sanitizeAssetName(_ name: String) -> String {
+        // Convert to lowercase and replace spaces/special chars with underscores
+        return name.lowercased()
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "-", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+        .replacingOccurrences(of: "(", with: "")
+        .replacingOccurrences(of: ")", with: "")
+        .replacingOccurrences(of: ".", with: "_")
+}
+
+private func determineCategory(from name: String) -> String {
+    let lowercased = name.lowercased()
+    
+    if lowercased.contains("map") || lowercased.contains("location") || lowercased.contains("pin") {
+        return "Map"
+    } else if lowercased.contains("status") || lowercased.contains("notification") || lowercased.contains("alert") {
+        return "Status"
+    } else if lowercased.contains("nav") || lowercased.contains("navigation") || lowercased.contains("ui") {
+        return "Navigation"
+    } else if lowercased.contains("social") || lowercased.contains("facebook") || lowercased.contains("twitter") {
+        return "Social"
+    } else {
+        return "General"
+    }
+}
+
+private func determineVariant(from name: String) -> String? {
+    let lowercased = name.lowercased()
+    
+    if lowercased.contains("filled") || lowercased.contains("solid") {
+        return "filled"
+    } else if lowercased.contains("outline") || lowercased.contains("stroke") || lowercased.contains("line") {
+        return "outline"
+    } else if lowercased.contains("dark") {
+        return "dark"
+    } else if lowercased.contains("light") {
+        return "light"
+    }
+    
+    return nil
+}
+
+enum FigmaError: Error, LocalizedError {
+    case invalidUrl
+    case apiError(String)
+    case downloadError(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidUrl:
+            return "Invalid Figma URL"
+        case .apiError(let message):
+            return "Figma API Error: \(message)"
+        case .downloadError(let message):
+            return "Download Error: \(message)"
+        }
+    }
 }
 
 
