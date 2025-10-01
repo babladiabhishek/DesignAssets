@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "scale" : "1x",
+      "filename" : "ic_eat_in_filled_32.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}
