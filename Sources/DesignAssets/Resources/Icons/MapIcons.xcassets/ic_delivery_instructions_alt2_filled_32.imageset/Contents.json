@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ic_delivery_instructions_alt2_filled_32.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

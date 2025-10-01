@@ -98,6 +98,45 @@ do {
     
     // Download images for these components
     let outputDir = URL(fileURLWithPath: "Sources/DesignAssets/Resources/Icons.xcassets")
+    
+    // Create category-specific directories
+    let statusDir = URL(fileURLWithPath: "Sources/DesignAssets/Resources/Icons/StatusIcons.xcassets")
+    let mapDir = URL(fileURLWithPath: "Sources/DesignAssets/Resources/Icons/MapIcons.xcassets")
+    let feelGoodDir = URL(fileURLWithPath: "Sources/DesignAssets/Resources/Icons/FeelGoodIcons.xcassets")
+    let generalDir = URL(fileURLWithPath: "Sources/DesignAssets/Resources/Icons/GeneralIcons.xcassets")
+    
+    // Ensure directories exist
+    try? FileManager.default.createDirectory(at: statusDir, withIntermediateDirectories: true)
+    try? FileManager.default.createDirectory(at: mapDir, withIntermediateDirectories: true)
+    try? FileManager.default.createDirectory(at: feelGoodDir, withIntermediateDirectories: true)
+    try? FileManager.default.createDirectory(at: generalDir, withIntermediateDirectories: true)
+    
+    // Function to determine icon category
+    func getCategoryDirectory(for name: String) -> URL {
+        let lowercased = name.lowercased()
+        
+        // Status icons (12x12, 16x16, 20x20)
+        if lowercased.contains("status") || lowercased.contains("alert") || lowercased.contains("success") || 
+           lowercased.contains("info") || lowercased.contains("blocker") || lowercased.contains("selected") {
+            return statusDir
+        }
+        
+        // Map icons (order location, map pins)
+        if lowercased.contains("map") || lowercased.contains("location") || lowercased.contains("pin") || 
+           lowercased.contains("order") || lowercased.contains("delivery") {
+            return mapDir
+        }
+        
+        // Feel Good icons (main icon set - filled/outline)
+        if lowercased.contains("light") || lowercased.contains("bulb") || lowercased.contains("search") || 
+           lowercased.contains("home") || lowercased.contains("heart") || lowercased.contains("play") || 
+           lowercased.contains("pause") || lowercased.contains("refresh") || lowercased.contains("edit") {
+            return feelGoodDir
+        }
+        
+        // Default to general for everything else
+        return generalDir
+    }
     var successCount = 0
     var failCount = 0
     
@@ -193,8 +232,9 @@ do {
             
             downloadSemaphore.wait()
             
-        // Step 4: Check if image already exists
-        let imagesetDir = outputDir.appendingPathComponent("\(sanitizedName).imageset")
+        // Step 4: Determine category and create appropriate directory
+        let categoryDir = getCategoryDirectory(for: name)
+        let imagesetDir = categoryDir.appendingPathComponent("\(sanitizedName).imageset")
         let pdfPath = imagesetDir.appendingPathComponent("\(sanitizedName).pdf")
         
         // Skip if already downloaded and file exists (unless force download)

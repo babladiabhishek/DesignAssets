@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ic_restaurant_default_32.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

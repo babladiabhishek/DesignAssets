@@ -11,7 +11,13 @@ let package = Package(
     .target(
       name: "DesignAssets",
       dependencies: ["FetchIconsBuildTool"],
-      resources: [.process("Resources/Icons.xcassets")]
+      resources: [
+        .process("Resources/Icons.xcassets"),
+        .process("Resources/Icons/StatusIcons.xcassets"),
+        .process("Resources/Icons/MapIcons.xcassets"),
+        .process("Resources/Icons/FeelGoodIcons.xcassets"),
+        .process("Resources/Icons/GeneralIcons.xcassets")
+      ]
     ),
     .executableTarget(
       name: "FetchIconsBuildTool",

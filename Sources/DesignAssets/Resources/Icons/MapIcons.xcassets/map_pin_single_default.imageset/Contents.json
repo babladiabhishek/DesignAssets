@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "map_pin_single_default.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

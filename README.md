@@ -87,14 +87,58 @@ struct ContentView: View {
                 .font(.largeTitle)
             
             // Access by category
-            GeneratedIcons.General.ic_search_default_32.image
-            
-            // Access all icons
-            ForEach(GeneratedIcons.All.allCases, id: \.self) { icon in
-                icon.image
-            }
+            GeneratedIcons.Status.ic_status_success_16.image
+            GeneratedIcons.Map.map_pin_single_default.image
+            GeneratedIcons.FeelGood.ic_search_default_32.image
+            GeneratedIcons.General.ic_hamburger_default_32.image
         }
     }
+}
+```
+
+### **Organized Icon Categories**
+
+Icons are automatically organized into separate `.xcassets` files by category:
+
+- **StatusIcons.xcassets** - Status icons (12x12, 16x16, 20x20)
+- **MapIcons.xcassets** - Map/Order Location icons  
+- **FeelGoodIcons.xcassets** - Main icon set (filled/outline)
+- **GeneralIcons.xcassets** - General purpose icons
+
+### **Category-based Access**
+
+```swift
+// Status Icons
+GeneratedIcons.Status.ic_status_success_16.image
+GeneratedIcons.Status.ic_status_alert_20.image
+
+// Map Icons  
+GeneratedIcons.Map.map_pin_single_default.image
+GeneratedIcons.Map.ic_order_delivery_32.image
+
+// Feel Good Icons
+GeneratedIcons.FeelGood.ic_light_bulb_default_32.image
+GeneratedIcons.FeelGood.ic_search_filled_32.image
+
+// General Icons
+GeneratedIcons.General.ic_hamburger_default_32.image
+GeneratedIcons.General.ic_trash_filled_32.image
+```
+
+### **Convenience Accessors**
+
+```swift
+// Get all icons in a category
+let statusIcons = GeneratedIcons.statusIcons
+let mapIcons = GeneratedIcons.mapIcons
+let feelGoodIcons = GeneratedIcons.feelGoodIcons
+let generalIcons = GeneratedIcons.generalIcons
+
+// Use in SwiftUI
+ForEach(GeneratedIcons.statusIcons, id: \.self) { icon in
+    icon.image
+        .font(.title2)
+        .foregroundColor(.blue)
 }
 ```
 
