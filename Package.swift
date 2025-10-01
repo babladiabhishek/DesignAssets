@@ -5,14 +5,15 @@ let package = Package(
   name: "DesignAssets",
   platforms: [.iOS(.v15), .macOS(.v12)],
   products: [
-    .library(name: "DesignAssets", targets: ["DesignAssets"])
+    .library(name: "DesignAssets", targets: ["DesignAssets"]),
+    .executable(name: "OrganizedIconsDemo", targets: ["OrganizedIconsDemo"]),
+    .executable(name: "IconDebugTest", targets: ["IconDebugTest"])
   ],
   targets: [
     .target(
       name: "DesignAssets",
       dependencies: ["FetchIconsBuildTool"],
       resources: [
-        .process("Resources/Icons.xcassets"),
         .process("Resources/Icons/StatusIcons.xcassets"),
         .process("Resources/Icons/MapIcons.xcassets"),
         .process("Resources/Icons/FeelGoodIcons.xcassets"),
@@ -22,6 +23,18 @@ let package = Package(
     .executableTarget(
       name: "FetchIconsBuildTool",
       path: "Scripts"
+    ),
+    .executableTarget(
+      name: "OrganizedIconsDemo",
+      dependencies: ["DesignAssets"],
+      path: "Examples",
+      sources: ["OrganizedIconsDemo.swift"]
+    ),
+    .executableTarget(
+      name: "IconDebugTest",
+      dependencies: ["DesignAssets"],
+      path: "Examples",
+      sources: ["IconDebugTest.swift"]
     ),
     .testTarget(
       name: "DesignAssetsTests",

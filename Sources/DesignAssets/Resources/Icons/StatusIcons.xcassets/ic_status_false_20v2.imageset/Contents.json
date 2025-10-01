@@ -1,9 +1,17 @@
 {
   "images" : [
     {
-      "idiom" : "universal",
       "filename" : "ic_status_false_20v2.pdf",
+      "idiom" : "universal",
       "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {
