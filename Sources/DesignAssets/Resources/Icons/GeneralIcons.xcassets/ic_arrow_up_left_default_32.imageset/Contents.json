@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ic_arrow_up_left_default_32.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

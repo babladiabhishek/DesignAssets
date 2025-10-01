@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ic_bar_code_filled_32.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
