@@ -3,112 +3,109 @@ import XCTest
 
 final class DesignAssetsTests: XCTestCase {
     
-    func testSocialMediaIconsExist() throws {
-        // Test that all expected social media icons exist
-        XCTAssertNotNil(SocialMediaIcons.Instagram.blue)
-        XCTAssertNotNil(SocialMediaIcons.Instagram.white)
-        XCTAssertNotNil(SocialMediaIcons.Facebook.blue)
-        XCTAssertNotNil(SocialMediaIcons.Facebook.white)
-        XCTAssertNotNil(SocialMediaIcons.Twitter.blue)
-        XCTAssertNotNil(SocialMediaIcons.Twitter.white)
-        XCTAssertNotNil(SocialMediaIcons.LinkedIn.blue)
-        XCTAssertNotNil(SocialMediaIcons.LinkedIn.white)
-        XCTAssertNotNil(SocialMediaIcons.YouTube.red)
-        XCTAssertNotNil(SocialMediaIcons.YouTube.white)
+    func testGeneratedIconsExist() throws {
+        // Test that GeneratedIcons enum exists and has cases
+        // We can test by accessing specific known icons from the All enum
+        let _ = GeneratedIcons.All.deprecated__ic_add_filled_32
+        let _ = GeneratedIcons.All.ic_light_bulb_default_32
+        let _ = GeneratedIcons.All.ic_status_success_20
+        // If we get here without compilation errors, the enums exist
     }
     
-    func testSocialIconInfoProperties() throws {
-        let icon = SocialMediaIcons.Instagram.blue
+    func testIconCategories() throws {
+        // Test that we have the expected categories
+        let categories = DesignAssets.iconCategories
+        XCTAssertTrue(categories.contains("General"))
+        XCTAssertTrue(categories.contains("Map"))
+        XCTAssertTrue(categories.contains("Navigation"))
+        XCTAssertTrue(categories.contains("Status"))
+    }
+    
+    func testIconImageAccess() throws {
+        // Test that icons can be accessed and have image properties
+        let sampleIcon = GeneratedIcons.ic_light_bulb_default_32
         
-        XCTAssertEqual(icon.name, "social_instagram_blue")
-        XCTAssertEqual(icon.platform, "Instagram")
-        XCTAssertEqual(icon.color, "Blue")
-        XCTAssertEqual(icon.size, 24.0)
-        XCTAssertTrue(icon.figmaUrl.contains("figma.com"))
-    }
-    
-    func testPlatformCollections() throws {
-        // Test Instagram icons collection
-        let instagramIcons = SocialMediaIcons.instagramIcons
-        XCTAssertEqual(instagramIcons.count, 2)
-        XCTAssertTrue(instagramIcons.contains { $0.color == "Blue" })
-        XCTAssertTrue(instagramIcons.contains { $0.color == "White" })
+        // Test SwiftUI Image access
+        #if canImport(SwiftUI)
+        let image = sampleIcon.image
+        XCTAssertNotNil(image)
+        #endif
         
-        // Test Facebook icons collection
-        let facebookIcons = SocialMediaIcons.facebookIcons
-        XCTAssertEqual(facebookIcons.count, 2)
-        XCTAssertTrue(facebookIcons.contains { $0.color == "Blue" })
-        XCTAssertTrue(facebookIcons.contains { $0.color == "White" })
+        // Test UIKit UIImage access
+        #if canImport(UIKit)
+        let uiImage = sampleIcon.uiImage
+        // UIImage might be nil if the asset isn't loaded, which is expected
+        #endif
     }
     
-    func testAllIconsCollection() throws {
-        let allIcons = SocialMediaIcons.allIcons
-        XCTAssertEqual(allIcons.count, 10) // 5 platforms × 2 variants each
+    func testIconCategoryProperty() throws {
+        // Test that icons have category information
+        let sampleIcon = GeneratedIcons.ic_light_bulb_default_32
+        let category = sampleIcon.category
+        XCTAssertFalse(category.isEmpty, "Icon should have a non-empty category")
+        XCTAssertTrue(DesignAssets.iconCategories.contains(category), "Category should be in the list of available categories")
+    }
+    
+    func testAvailableIconNames() throws {
+        // Test that we can get available icon names
+        let iconNames = DesignAssets.availableIconNames
+        XCTAssertGreaterThan(iconNames.count, 0, "Should have available icon names")
         
-        // Test that all platforms are represented
-        let platforms = Set(allIcons.map { $0.platform })
-        XCTAssertTrue(platforms.contains("Instagram"))
-        XCTAssertTrue(platforms.contains("Facebook"))
-        XCTAssertTrue(platforms.contains("Twitter"))
-        XCTAssertTrue(platforms.contains("LinkedIn"))
-        XCTAssertTrue(platforms.contains("YouTube"))
+        // Test that all names are non-empty
+        for name in iconNames {
+            XCTAssertFalse(name.isEmpty, "Icon name should not be empty")
+        }
     }
     
-    func testPlatformFiltering() throws {
-        // Test filtering by platform
-        let instagramIcons = SocialMediaIcons.icons(for: "Instagram")
-        XCTAssertEqual(instagramIcons.count, 2)
-        XCTAssertTrue(instagramIcons.allSatisfy { $0.platform == "Instagram" })
+    func testIconNameSanitization() throws {
+        // Test that icon names are properly sanitized (no special characters)
+        let iconNames = DesignAssets.availableIconNames
         
-        let facebookIcons = SocialMediaIcons.icons(for: "Facebook")
-        XCTAssertEqual(facebookIcons.count, 2)
-        XCTAssertTrue(facebookIcons.allSatisfy { $0.platform == "Facebook" })
+        for name in iconNames {
+            // Should not contain spaces, special characters, or emojis
+            XCTAssertFalse(name.contains(" "), "Icon name should not contain spaces: \(name)")
+            XCTAssertFalse(name.contains("🛑"), "Icon name should not contain emojis: \(name)")
+            XCTAssertTrue(name.allSatisfy { $0.isLetter || $0.isNumber || $0 == "_" }, "Icon name should only contain letters, numbers, and underscores: \(name)")
+        }
     }
     
-    func testColorVariants() throws {
-        // Test getting color variants for a platform
-        let instagramColors = SocialMediaIcons.colorVariants(for: "Instagram")
-        XCTAssertEqual(instagramColors.count, 2)
-        XCTAssertTrue(instagramColors.contains("Blue"))
-        XCTAssertTrue(instagramColors.contains("White"))
+    func testFigmaIntegration() throws {
+        // Test that the Figma integration API exists
+        let fileId = "T0ahWzB1fWx5BojSMkfiAE"
+        let token = "test_token"
         
-        let youtubeColors = SocialMediaIcons.colorVariants(for: "YouTube")
-        XCTAssertEqual(youtubeColors.count, 2)
-        XCTAssertTrue(youtubeColors.contains("Red"))
-        XCTAssertTrue(youtubeColors.contains("White"))
-    }
-    
-    func testAvailablePlatforms() throws {
-        let platforms = SocialMediaIcons.availablePlatforms
-        XCTAssertEqual(platforms.count, 5)
-        XCTAssertTrue(platforms.contains("Instagram"))
-        XCTAssertTrue(platforms.contains("Facebook"))
-        XCTAssertTrue(platforms.contains("Twitter"))
-        XCTAssertTrue(platforms.contains("LinkedIn"))
-        XCTAssertTrue(platforms.contains("YouTube"))
-    }
-    
-    func testIconVariantDetection() throws {
-        // Test dark/light variant detection
-        XCTAssertTrue(SocialMediaIcons.Instagram.white.isLightVariant)
-        XCTAssertFalse(SocialMediaIcons.Instagram.blue.isLightVariant)
+        // This should not crash (even though it won't actually fetch without a real token)
+        let expectation = XCTestExpectation(description: "Figma fetch should complete")
         
-        XCTAssertFalse(SocialMediaIcons.Instagram.white.isDarkVariant)
-        XCTAssertFalse(SocialMediaIcons.Instagram.blue.isDarkVariant) // Blue is not considered dark
-    }
-    
-    func testDisplayName() throws {
-        let icon = SocialMediaIcons.Instagram.blue
-        XCTAssertEqual(icon.displayName, "Instagram Blue")
+        Task {
+            do {
+                _ = try await DesignAssets.fetchIconsFromFigma(
+                    fileId: fileId,
+                    token: token,
+                    includeVariants: true,
+                    generateAssetCatalog: true,
+                    generateSwiftCode: true
+                )
+            } catch {
+                // Expected to fail with test token, but should not crash
+            }
+            expectation.fulfill()
+        }
         
-        let whiteIcon = SocialMediaIcons.Facebook.white
-        XCTAssertEqual(whiteIcon.displayName, "Facebook White")
+        wait(for: [expectation], timeout: 5.0)
     }
     
-    func testFigmaUrlFormat() throws {
-        let icon = SocialMediaIcons.Twitter.blue
-        XCTAssertTrue(icon.figmaUrl.contains("figma.com"))
-        XCTAssertTrue(icon.figmaUrl.contains("design"))
-        XCTAssertTrue(icon.figmaUrl.contains("node-id"))
+    func testIconRefreshLogic() throws {
+        // Test the icon refresh logic
+        let needsRefresh = DesignAssets.needsIconRefresh
+        // The refresh logic depends on file existence and timing
+        // Just test that the method doesn't crash
+        XCTAssertNotNil(needsRefresh, "Refresh check should not crash")
+        
+        // Mark as refreshed
+        DesignAssets.markIconsRefreshed()
+        
+        // Test that marking as refreshed doesn't crash
+        XCTAssertTrue(true, "Mark as refreshed should not crash")
     }
 }

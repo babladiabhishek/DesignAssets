@@ -108,24 +108,7 @@ private func runFetch(context: some FetchContext, arguments: [String]) async thr
         context.log("🎉 Successfully processed \(icons.count) icons from Figma!")
         context.log("📊 Categories: \(Set(icons.map { $0.category }).sorted().joined(separator: ", "))")
         
-        // Convert FigmaIconInfo to plugin IconInfo for summary report
-        let pluginIcons = icons.map { figmaIcon in
-            IconInfo(
-                id: figmaIcon.id,
-                name: figmaIcon.name,
-                category: figmaIcon.category,
-                variant: figmaIcon.variant,
-                nodeId: figmaIcon.nodeId,
-                filePath: figmaIcon.filePath,
-                size: figmaIcon.size,
-                isComponent: figmaIcon.isComponent,
-                thumbnailUrl: figmaIcon.thumbnailUrl,
-                description: figmaIcon.description
-            )
-        }
-        
-        // Generate summary report
-        generateSummaryReport(icons: pluginIcons, outputPath: outputDir.appending(subpath: "icon-summary.md"))
+        // Icons successfully processed and generated
         
         context.log("✅ Integration completed successfully!")
         
@@ -159,39 +142,6 @@ private func printHelp() {
     """)
 }
 
-private func generateSummaryReport(icons: [IconInfo], outputPath: Path) {
-    let categories = Dictionary(grouping: icons) { $0.category }
-    let variants = Dictionary(grouping: icons) { $0.variant ?? "default" }
-    
-    var report = """
-    # Figma Icons Summary Report
-    
-    Generated on: \(Date())
-    Total Icons: \(icons.count)
-    
-    ## Categories
-    """
-    
-    for (category, categoryIcons) in categories.sorted(by: { $0.key < $1.key }) {
-        report += "\n- **\(category)**: \(categoryIcons.count) icons"
-    }
-    
-    report += "\n\n## Variants\n"
-    for (variant, variantIcons) in variants.sorted(by: { $0.key < $1.key }) {
-        report += "\n- **\(variant)**: \(variantIcons.count) icons"
-    }
-    
-    report += "\n\n## All Icons\n"
-    for icon in icons.sorted(by: { $0.name < $1.name }) {
-        report += "\n- `\(icon.name)` (\(icon.category)\(icon.variant != nil ? ", \(icon.variant!)" : ""))"
-    }
-    
-    do {
-        try report.write(to: URL(fileURLWithPath: outputPath.string), atomically: true, encoding: .utf8)
-    } catch {
-        print("⚠️ Could not write summary report: \(error.localizedDescription)")
-    }
-}
 
 // MARK: - Mock Data for Testing
 
@@ -523,11 +473,6 @@ struct FigmaIconInfo {
             // Check if it looks like an icon (starts with ic_ or contains icon keywords)
             if name.hasPrefix("ic_") || 
                name.contains("icon") || 
-               name.contains("social") ||
-               name.contains("facebook") ||
-               name.contains("twitter") ||
-               name.contains("instagram") ||
-               name.contains("linkedin") ||
            name.contains("home") ||
            name.contains("search") ||
            name.contains("location") ||
@@ -547,38 +492,61 @@ struct FigmaIconInfo {
         fileId: String,
         token: String,
         outputDirectory: URL
-) async throws -> FigmaIconInfo {
-        // Get image URL from Figma API
+    ) async throws -> FigmaIconInfo {
+        // Step 1: Get image URL from Figma API
         let imageUrl = try await getFigmaImageUrl(
             fileId: fileId,
             nodeId: component.nodeId,
             token: token
         )
         
-        // Download the image
+        // Step 2: Download the actual image from the URL
         let imageData = try await downloadImage(from: imageUrl)
         
         // Create asset name from component name
         let assetName = sanitizeAssetName(component.name)
-    let category = determineCategory(from: component.name)
-    let variant = determineVariant(from: component.name)
+        let category = determineCategory(from: component.name)
+        let variant = determineVariant(from: component.name)
         
-        // Save as PNG
-        let fileName = "\(assetName).png"
-        let fileUrl = outputDirectory.appendingPathComponent(fileName)
+        // Create imageset directory
+        let imagesetDir = outputDirectory.appendingPathComponent("\(assetName).imageset")
+        try FileManager.default.createDirectory(at: imagesetDir, withIntermediateDirectories: true)
+        
+        // Save as PDF
+        let fileName = "\(assetName).pdf"
+        let fileUrl = imagesetDir.appendingPathComponent(fileName)
         try imageData.write(to: fileUrl)
         
-    return FigmaIconInfo(
-        id: component.key,
+        // Create Contents.json for the imageset
+        let contents: [String: Any] = [
+            "images": [
+                [
+                    "filename": fileName,
+                    "idiom": "universal",
+                    "scale": "1x"
+                ]
+            ],
+            "info": [
+                "author": "xcode",
+                "version": 1
+            ]
+        ]
+        
+        let contentsData = try JSONSerialization.data(withJSONObject: contents, options: .prettyPrinted)
+        let contentsPath = imagesetDir.appendingPathComponent("Contents.json")
+        try contentsData.write(to: contentsPath)
+        
+        return FigmaIconInfo(
+            id: component.key,
             name: assetName,
-        category: category,
-        variant: variant,
+            category: category,
+            variant: variant,
             nodeId: component.nodeId,
-        filePath: fileUrl.path,
-        size: CGSize(width: 24, height: 24),
-        isComponent: true,
-        thumbnailUrl: nil,
-        description: component.description
+            filePath: imagesetDir.path,
+            size: CGSize(width: 32, height: 32),
+            isComponent: true,
+            thumbnailUrl: nil,
+            description: component.description
         )
     }
     
@@ -590,8 +558,8 @@ struct FigmaIconInfo {
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "ids", value: nodeId),
-            URLQueryItem(name: "format", value: "png"),
-        URLQueryItem(name: "scale", value: "2") // High resolution
+            URLQueryItem(name: "format", value: "pdf"),
+            URLQueryItem(name: "scale", value: "1") // Standard resolution
         ]
         
         request.url = components.url
@@ -647,8 +615,6 @@ private func determineCategory(from name: String) -> String {
         return "Status"
     } else if lowercased.contains("nav") || lowercased.contains("navigation") || lowercased.contains("ui") {
         return "Navigation"
-    } else if lowercased.contains("social") || lowercased.contains("facebook") || lowercased.contains("twitter") {
-        return "Social"
     } else {
         return "General"
     }

@@ -1,0 +1,13 @@
+{
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  },
+  "images" : [
+    {
+      "filename" : "flagtm.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ]
+}

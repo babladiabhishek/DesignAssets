@@ -1,0 +1,13 @@
+{
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  },
+  "images" : [
+    {
+      "filename" : "flagna.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ]
+}
