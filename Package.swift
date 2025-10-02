@@ -5,12 +5,21 @@ let package = Package(
   name: "DesignAssets",
   platforms: [.iOS(.v15), .macOS(.v12)],
   products: [
-    .library(name: "DesignAssets", targets: ["DesignAssets"])
+    .library(name: "DesignAssets", targets: ["DesignAssets"]),
+    .executable(name: "DesignAssetsDemo", targets: ["DesignAssetsDemo"])
   ],
   targets: [
     .target(
       name: "DesignAssets",
       resources: [.process("Resources/Icons.xcassets")]
+    ),
+    .executableTarget(
+      name: "DesignAssetsDemo",
+      dependencies: ["DesignAssets"]
+    ),
+    .testTarget(
+      name: "DesignAssetsTests",
+      dependencies: ["DesignAssets"]
     ),
     .plugin(
       name: "FetchIconsPlugin",
