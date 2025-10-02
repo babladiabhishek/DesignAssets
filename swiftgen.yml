@@ -1,0 +1,14 @@
+xcassets:
+  inputs:
+    - Sources/DesignAssets/Resources/Icons/StatusIcons.xcassets
+    - Sources/DesignAssets/Resources/Icons/MapIcons.xcassets
+    - Sources/DesignAssets/Resources/Icons/FeelGoodIcons.xcassets
+    - Sources/DesignAssets/Resources/Icons/GeneralIcons.xcassets
+    - Sources/DesignAssets/Resources/Icons.xcassets
+  outputs:
+    - templateName: swift5
+      output: Sources/DesignAssets/Resources/GeneratedAssets.swift
+      params:
+        bundle: Bundle.designAssets
+        enumName: GeneratedAssets
+        publicAccess: true
