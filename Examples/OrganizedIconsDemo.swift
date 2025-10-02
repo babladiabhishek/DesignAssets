@@ -189,7 +189,7 @@ struct CategoryPickerView: View {
                                             .frame(width: 32, height: 32)
                                             .foregroundColor(iconColor(for: selectedCategory))
                                         
-                                        Text("\(icon)")
+                                        Text(verbatim: "You have \(icon) items") // ✅ no warning
                                             .font(.caption2)
                                             .multilineTextAlignment(.center)
                                             .lineLimit(2)
@@ -366,7 +366,7 @@ struct IconCategorySection: View {
                                     .frame(width: 32, height: 32)
                                     .foregroundColor(color)
                                 
-                                Text("\(icon)")
+                                Text(verbatim: "You have \(icon) items") // ✅ no warning
                                     .font(.caption2)
                                     .multilineTextAlignment(.center)
                                     .lineLimit(1)
