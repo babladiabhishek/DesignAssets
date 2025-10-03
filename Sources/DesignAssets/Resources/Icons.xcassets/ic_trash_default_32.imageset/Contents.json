@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ic_trash_default_32.pdf",
+      "scale" : "1x",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
