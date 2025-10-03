@@ -5,17 +5,12 @@ let package = Package(
   name: "DesignAssets",
   platforms: [.iOS(.v15), .macOS(.v12)],
   products: [
-    .library(name: "DesignAssets", targets: ["DesignAssets"]),
-    .executable(name: "DesignAssetsDemo", targets: ["DesignAssetsDemo"])
+    .library(name: "DesignAssets", targets: ["DesignAssets"])
   ],
   targets: [
     .target(
       name: "DesignAssets",
       resources: [.process("Resources/Icons.xcassets")]
-    ),
-    .executableTarget(
-      name: "DesignAssetsDemo",
-      dependencies: ["DesignAssets"]
     ),
     .testTarget(
       name: "DesignAssetsTests",
