@@ -43,7 +43,7 @@ struct AllIconsView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(Color.secondary.opacity(0.1))
                 .cornerRadius(8)
                 
                 Picker("Category", selection: $selectedCategory) {
@@ -54,7 +54,7 @@ struct AllIconsView: View {
                 .pickerStyle(.segmented)
             }
             .padding()
-            .background(Color(NSColor.windowBackgroundColor))
+            .background(Color.primary.opacity(0.05))
             
             // Icons grid
             ScrollView {
@@ -102,7 +102,7 @@ struct AllIconsView: View {
                         .padding(8)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(NSColor.controlBackgroundColor))
+                                .fill(Color.secondary.opacity(0.1))
                         )
                         .contextMenu {
                             Button("Copy Name") {

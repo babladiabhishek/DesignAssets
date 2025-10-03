@@ -72,7 +72,7 @@ struct ContentView: View {
                 .padding()
             }
             .frame(width: 200)
-            .background(Color(NSColor.controlBackgroundColor))
+            .background(Color.secondary.opacity(0.1))
             
             // Main content
             Group {

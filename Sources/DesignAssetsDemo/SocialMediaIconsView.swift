@@ -53,7 +53,7 @@ struct SocialMediaIconsView: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(NSColor.controlBackgroundColor))
+                            .fill(Color.secondary.opacity(0.1))
                     )
                 }
             }

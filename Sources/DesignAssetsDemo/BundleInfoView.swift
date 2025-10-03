@@ -27,7 +27,7 @@ struct BundleInfoView: View {
                         InfoRow(label: "Resource Path", value: info.resourcePath ?? "Not available")
                     }
                     .padding()
-                    .background(Color(NSColor.controlBackgroundColor))
+                    .background(Color.secondary.opacity(0.1))
                     .cornerRadius(12)
                     
                     // Icon Statistics
@@ -55,7 +55,7 @@ struct BundleInfoView: View {
                         }
                     }
                     .padding()
-                    .background(Color(NSColor.controlBackgroundColor))
+                    .background(Color.secondary.opacity(0.1))
                     .cornerRadius(12)
                     
                     // Icon Name Statistics
@@ -91,7 +91,7 @@ struct BundleInfoView: View {
                         }
                     }
                     .padding()
-                    .background(Color(NSColor.controlBackgroundColor))
+                    .background(Color.secondary.opacity(0.1))
                     .cornerRadius(12)
                     
                     // Social Media Icons Info
@@ -123,7 +123,7 @@ struct BundleInfoView: View {
                         }
                     }
                     .padding()
-                    .background(Color(NSColor.controlBackgroundColor))
+                    .background(Color.secondary.opacity(0.1))
                     .cornerRadius(12)
                     
                 } else {
