@@ -508,8 +508,10 @@ struct FigmaIconInfo {
         let category = determineCategory(from: component.name)
         let variant = determineVariant(from: component.name)
         
-        // Create imageset directory
-        let imagesetDir = outputDirectory.appendingPathComponent("\(assetName).imageset")
+        // Create imageset directory within Icons.xcassets with category prefix
+        let iconsCatalogDir = outputDirectory.appendingPathComponent("Icons.xcassets")
+        let categorizedAssetName = "\(category.lowercased())_\(assetName)"
+        let imagesetDir = iconsCatalogDir.appendingPathComponent("\(categorizedAssetName).imageset")
         try FileManager.default.createDirectory(at: imagesetDir, withIntermediateDirectories: true)
         
         // Save as SVG
@@ -538,7 +540,7 @@ struct FigmaIconInfo {
         
         return FigmaIconInfo(
             id: component.key,
-            name: assetName,
+            name: categorizedAssetName,
             category: category,
             variant: variant,
             nodeId: component.nodeId,

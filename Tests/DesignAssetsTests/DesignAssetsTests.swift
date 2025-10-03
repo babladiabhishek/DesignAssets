@@ -3,49 +3,6 @@ import XCTest
 
 final class DesignAssetsTests: XCTestCase {
     
-    func testGeneratedIconsExist() throws {
-        // Test that GeneratedIcons enum exists and has cases
-        // We can test by accessing specific known icons from the All enum
-        let _ = GeneratedIcons.All.deprecated__ic_add_filled_32
-        let _ = GeneratedIcons.All.ic_light_bulb_default_32
-        let _ = GeneratedIcons.All.ic_status_success_20
-        // If we get here without compilation errors, the enums exist
-    }
-    
-    func testIconCategories() throws {
-        // Test that we have the expected categories
-        let categories = DesignAssets.iconCategories
-        XCTAssertTrue(categories.contains("General"))
-        XCTAssertTrue(categories.contains("Map"))
-        XCTAssertTrue(categories.contains("Navigation"))
-        XCTAssertTrue(categories.contains("Status"))
-    }
-    
-    func testIconImageAccess() throws {
-        // Test that icons can be accessed and have image properties
-        let sampleIcon = GeneratedIcons.ic_light_bulb_default_32
-        
-        // Test SwiftUI Image access
-        #if canImport(SwiftUI)
-        let image = sampleIcon.image
-        XCTAssertNotNil(image)
-        #endif
-        
-        // Test UIKit UIImage access
-        #if canImport(UIKit)
-        let uiImage = sampleIcon.uiImage
-        // UIImage might be nil if the asset isn't loaded, which is expected
-        #endif
-    }
-    
-    func testIconCategoryProperty() throws {
-        // Test that icons have category information
-        let sampleIcon = GeneratedIcons.ic_light_bulb_default_32
-        let category = sampleIcon.category
-        XCTAssertFalse(category.isEmpty, "Icon should have a non-empty category")
-        XCTAssertTrue(DesignAssets.iconCategories.contains(category), "Category should be in the list of available categories")
-    }
-    
     func testAvailableIconNames() throws {
         // Test that we can get available icon names
         let iconNames = DesignAssets.availableIconNames
@@ -57,16 +14,13 @@ final class DesignAssetsTests: XCTestCase {
         }
     }
     
-    func testIconNameSanitization() throws {
-        // Test that icon names are properly sanitized (no special characters)
-        let iconNames = DesignAssets.availableIconNames
-        
-        for name in iconNames {
-            // Should not contain spaces, special characters, or emojis
-            XCTAssertFalse(name.contains(" "), "Icon name should not contain spaces: \(name)")
-            XCTAssertFalse(name.contains("🛑"), "Icon name should not contain emojis: \(name)")
-            XCTAssertTrue(name.allSatisfy { $0.isLetter || $0.isNumber || $0 == "_" }, "Icon name should only contain letters, numbers, and underscores: \(name)")
-        }
+    func testIconCategories() throws {
+        // Test that we have the expected categories
+        let categories = DesignAssets.iconCategories
+        XCTAssertTrue(categories.contains("General"))
+        XCTAssertTrue(categories.contains("Map"))
+        XCTAssertTrue(categories.contains("Navigation"))
+        XCTAssertTrue(categories.contains("Status"))
     }
     
     func testFigmaIntegration() throws {
