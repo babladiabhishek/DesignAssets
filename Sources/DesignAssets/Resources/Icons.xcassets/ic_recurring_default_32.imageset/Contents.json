@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "scale" : "1x",
+      "filename" : "ic_recurring_default_32.pdf",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

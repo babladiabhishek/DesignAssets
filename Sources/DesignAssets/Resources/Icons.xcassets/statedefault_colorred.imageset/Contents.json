@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "statedefault_colorred.pdf",
+      "scale" : "1x",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
