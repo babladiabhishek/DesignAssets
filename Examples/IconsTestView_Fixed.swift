@@ -37,9 +37,9 @@ public struct IconsTestView: View {
         case flags = "Flags"
         case deprecated = "Deprecated"
         
-        fileprivate var icons: [GeneratedIcons.All] {
-            // Since GeneratedIcons.All doesn't have allCases, we'll use a subset of available icons
-            let allIcons: [GeneratedIcons.All] = [
+        fileprivate var icons: [GeneratedIcons] {
+            // Use the main GeneratedIcons enum which has the image property
+            let allIcons: [GeneratedIcons] = [
                 .deprecated__ic_add_filled_32,
                 .deprecated__ic_arrow_right_filled_32,
                 .deprecated__ic_chevron_down_filled_32,
@@ -143,7 +143,7 @@ public struct IconsTestView: View {
         }
     }
     
-    fileprivate var filteredIcons: [GeneratedIcons.All] {
+    fileprivate var filteredIcons: [GeneratedIcons] {
         let categoryIcons = selectedCategory.icons
         if searchText.isEmpty {
             return categoryIcons
@@ -241,7 +241,7 @@ public struct IconsTestView: View {
 // -----------------------------------------------------------------
 
 private struct EnhancedIconCard: View {
-    let iconName: GeneratedIcons.All
+    let iconName: GeneratedIcons
     let colorScheme: ColorScheme
     
     private var category: String {
@@ -311,7 +311,7 @@ private struct EnhancedIconCard: View {
                 .foregroundStyle(platformColor)
             
             // Usage example
-            Text("GeneratedIcons.All.\(String(describing: iconName))")
+            Text("GeneratedIcons.\(String(describing: iconName))")
                 .font(.system(size: 9))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
