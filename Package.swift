@@ -11,7 +11,6 @@ let package = Package(
     .target(
       name: "DesignAssets",
       resources: [
-        .process("Resources/Icons.xcassets"),
         .process("Resources/Icons/StatusIcons.xcassets"),
         .process("Resources/Icons/MapIcons.xcassets"),
         .process("Resources/Icons/FeelGoodIcons.xcassets"),
