@@ -512,8 +512,8 @@ struct FigmaIconInfo {
         let imagesetDir = outputDirectory.appendingPathComponent("\(assetName).imageset")
         try FileManager.default.createDirectory(at: imagesetDir, withIntermediateDirectories: true)
         
-        // Save as PDF
-        let fileName = "\(assetName).pdf"
+        // Save as SVG
+        let fileName = "\(assetName).svg"
         let fileUrl = imagesetDir.appendingPathComponent(fileName)
         try imageData.write(to: fileUrl)
         
@@ -558,7 +558,7 @@ struct FigmaIconInfo {
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "ids", value: nodeId),
-            URLQueryItem(name: "format", value: "pdf"),
+            URLQueryItem(name: "format", value: "svg"),
             URLQueryItem(name: "scale", value: "1") // Standard resolution
         ]
         
