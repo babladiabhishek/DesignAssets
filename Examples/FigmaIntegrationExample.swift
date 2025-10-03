@@ -2,7 +2,9 @@
 // This file demonstrates how to use the supercharged Figma integration
 
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 import DesignAssets
 
 // MARK: - Figma Integration Usage Examples
@@ -138,7 +140,6 @@ struct IconCategoriesExample: View {
             }
         }
         .navigationTitle("Categories")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -185,7 +186,6 @@ struct IconVariantsExample: View {
             }
         }
         .navigationTitle("Variants")
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     private func variantColor(for variant: String) -> Color {
@@ -268,7 +268,6 @@ struct DynamicIconExample: View {
             }
         }
         .navigationTitle("Dynamic Loading")
-        .navigationBarTitleDisplayMode(.inline)
     }
     
     private var filteredIcons: [String] {

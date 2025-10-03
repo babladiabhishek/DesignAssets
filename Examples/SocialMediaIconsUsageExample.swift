@@ -2,7 +2,9 @@
 // This file demonstrates how to use the social media icons in your DesignAssets package
 
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 import DesignAssets
 
 // MARK: - SwiftUI Usage Examples
@@ -57,69 +59,62 @@ struct SocialMediaIconsSwiftUIExample: View {
     }
 }
 
-// MARK: - UIKit Usage Examples
+// MARK: - macOS Usage Examples
 
-class SocialMediaIconsUIKitExample: UIViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupSocialMediaIcons()
+struct SocialMediaIconsMacOSExample: View {
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Social Media Icons - macOS")
+                .font(.title)
+                .padding()
+            
+            // Instagram icons
+            createIconSection(
+                title: "Instagram:",
+                icons: [SocialMediaIcons.Instagram.blue, SocialMediaIcons.Instagram.white]
+            )
+            
+            // Facebook icons
+            createIconSection(
+                title: "Facebook:",
+                icons: [SocialMediaIcons.Facebook.blue, SocialMediaIcons.Facebook.white]
+            )
+            
+            // All LinkedIn icons
+            createIconSection(
+                title: "All LinkedIn Icons:",
+                icons: SocialMediaIcons.linkedinIcons
+            )
+        }
+        .padding()
     }
     
-    private func setupSocialMediaIcons() {
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.spacing = 20
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Instagram icons
-        let instagramStack = createIconStack(
-            title: "Instagram:",
-            icons: [SocialMediaIcons.Instagram.blue, SocialMediaIcons.Instagram.white]
-        )
-        stackView.addArrangedSubview(instagramStack)
-        
-        // Facebook icons
-        let facebookStack = createIconStack(
-            title: "Facebook:",
-            icons: [SocialMediaIcons.Facebook.blue, SocialMediaIcons.Facebook.white]
-        )
-        stackView.addArrangedSubview(facebookStack)
-        
-        // All LinkedIn icons
-        let linkedinStack = createIconStack(
-            title: "All LinkedIn Icons:",
-            icons: SocialMediaIcons.linkedinIcons
-        )
-        stackView.addArrangedSubview(linkedinStack)
-        
-        view.addSubview(stackView)
-        NSLayoutConstraint.activate([
-            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
-    }
-    
-    private func createIconStack(title: String, icons: [SocialIconInfo]) -> UIStackView {
-        let stackView = UIStackView()
-        stackView.axis = .horizontal
-        stackView.spacing = 10
-        stackView.alignment = .center
-        
-        let titleLabel = UILabel()
-        titleLabel.text = title
-        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        stackView.addArrangedSubview(titleLabel)
-        
-        for icon in icons {
-            if let imageView = icon.uiImage {
-                let imageView = UIImageView(image: imageView)
-                imageView.contentMode = .scaleAspectFit
-                imageView.frame = CGRect(x: 0, y: 0, width: 24, height: 24)
-                stackView.addArrangedSubview(imageView)
+    private func createIconSection(title: String, icons: [SocialIconInfo]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+            
+            HStack(spacing: 10) {
+                ForEach(icons, id: \.name) { icon in
+                    VStack(spacing: 4) {
+                        if let image = DesignAssets.icon(named: icon.name) {
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 24, height: 24)
+                        } else {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.secondary.opacity(0.3))
+                                .frame(width: 24, height: 24)
+                        }
+                        
+                        Text(icon.color)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
         }
-        
-        return stackView
     }
 }
 

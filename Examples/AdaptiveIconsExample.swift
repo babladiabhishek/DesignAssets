@@ -36,10 +36,16 @@ struct AdaptiveIconsExample: View {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 20) {
                             ForEach(["facebook", "instagram", "x_twitter", "linkedin", "youtube", "tiktok", "snapchat", "pinterest"], id: \.self) { platform in
                                 VStack(spacing: 8) {
-                                    DesignAssets.adaptiveIcon(named: platform, in: colorScheme)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 40, height: 40)
+                                    if let image = DesignAssets.adaptiveIcon(named: platform, in: colorScheme) {
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 40, height: 40)
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.secondary.opacity(0.3))
+                                            .frame(width: 40, height: 40)
+                                    }
                                     
                                     Text(platform.capitalized)
                                         .font(.caption2)

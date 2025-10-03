@@ -6,6 +6,5 @@ struct DesignAssetsDemoApp: App {
         WindowGroup {
             ContentView()
         }
-        .windowStyle(.automatic)
     }
 }
