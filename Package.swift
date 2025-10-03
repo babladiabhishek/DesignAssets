@@ -5,19 +5,11 @@ let package = Package(
   name: "DesignAssets",
   platforms: [.iOS(.v15), .macOS(.v12)],
   products: [
-    .library(name: "DesignAssets", targets: ["DesignAssets"]),
-    .executable(name: "OrganizedIconsDemo", targets: ["OrganizedIconsDemo"]),
-    .executable(name: "IconDebugTest", targets: ["IconDebugTest"]),
-    .executable(name: "SimpleIconTest", targets: ["SimpleIconTest"]),
-    .executable(name: "DebugBundleTest", targets: ["DebugBundleTest"]),
-    .executable(name: "BundleDiagnostic", targets: ["BundleDiagnostic"]),
-    .executable(name: "DirectIconTest", targets: ["DirectIconTest"]),
-    .executable(name: "SwiftGenTest", targets: ["SwiftGenTest"])
+    .library(name: "DesignAssets", targets: ["DesignAssets"])
   ],
   targets: [
     .target(
       name: "DesignAssets",
-      dependencies: ["FetchIconsBuildTool"],
       resources: [
         .process("Resources/Icons.xcassets"),
         .process("Resources/Icons/StatusIcons.xcassets"),
@@ -25,52 +17,6 @@ let package = Package(
         .process("Resources/Icons/FeelGoodIcons.xcassets"),
         .process("Resources/Icons/GeneralIcons.xcassets")
       ]
-    ),
-    .executableTarget(
-      name: "FetchIconsBuildTool",
-      path: "Scripts"
-    ),
-    .executableTarget(
-      name: "OrganizedIconsDemo",
-      dependencies: ["DesignAssets"],
-      path: "Examples",
-      sources: ["OrganizedIconsDemo.swift"]
-    ),
-    .executableTarget(
-      name: "IconDebugTest",
-      dependencies: ["DesignAssets"],
-      path: "Examples",
-      sources: ["IconDebugTest.swift"]
-    ),
-    .executableTarget(
-      name: "SimpleIconTest",
-      dependencies: ["DesignAssets"],
-      path: "Examples",
-      sources: ["SimpleIconTest.swift"]
-    ),
-    .executableTarget(
-      name: "DebugBundleTest",
-      dependencies: ["DesignAssets"],
-      path: "Examples",
-      sources: ["DebugBundleTest.swift"]
-    ),
-    .executableTarget(
-      name: "BundleDiagnostic",
-      dependencies: ["DesignAssets"],
-      path: "Examples",
-      sources: ["BundleDiagnostic.swift"]
-    ),
-    .executableTarget(
-      name: "DirectIconTest",
-      dependencies: ["DesignAssets"],
-      path: "Examples",
-      sources: ["DirectIconTest.swift"]
-    ),
-    .executableTarget(
-      name: "SwiftGenTest",
-      dependencies: ["DesignAssets"],
-      path: "Examples",
-      sources: ["SwiftGenTest.swift"]
     ),
     .testTarget(
       name: "DesignAssetsTests",

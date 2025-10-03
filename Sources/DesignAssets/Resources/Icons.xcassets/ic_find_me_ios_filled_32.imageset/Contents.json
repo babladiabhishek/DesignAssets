@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ic_find_me_ios_filled_32.pdf",
+      "scale" : "1x",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  },
+  "images" : [
+    {
+      "filename" : "ic_link_arrow.pdf",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ]
+}

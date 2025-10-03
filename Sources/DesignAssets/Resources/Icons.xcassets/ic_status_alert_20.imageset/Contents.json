@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ic_status_alert_20.pdf",
+      "scale" : "1x",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
