@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "statedisabled_colorgrey.pdf",
+      "scale" : "1x",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
