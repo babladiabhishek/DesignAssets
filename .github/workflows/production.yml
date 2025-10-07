@@ -121,14 +121,14 @@ jobs:
           echo "✅ No changes detected"
         fi
         
-        - name: Commit and push changes
-          if: steps.changes.outputs.changes == 'true'
-          run: |
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-            git add Sources/DesignAssets/Resources/
-            git add Sources/DesignAssets/GeneratedIcons.swift
+    - name: Commit and push changes
+      if: steps.changes.outputs.changes == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        git add Sources/DesignAssets/Resources/
+        git add Sources/DesignAssets/GeneratedIcons.swift
         git commit -m "🤖 Auto-update icons from production Figma
 
         - Fetched latest icons using advanced categorization
