@@ -149,9 +149,11 @@ public enum GeneratedIcons {
         
         swiftCode += """
         
+        #if canImport(SwiftUI)
         public var image: Image {
             Image(rawValue, bundle: bundle)
         }
+        #endif
         #if canImport(UIKit)
         public var uiImage: UIImage? {
             UIImage(named: rawValue, in: bundle, with: nil)
