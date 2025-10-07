@@ -34,7 +34,7 @@ jobs:
         python3 fetch_icons_advanced.py
         
     - name: Set up Swift
-      uses: swift-actions/setup-swift@v1
+      uses: swift-actions/setup-swift@v1.15.0
       with:
         swift-version: "5.9"
         
