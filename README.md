@@ -15,6 +15,8 @@ A supercharged Swift Package Manager package for fetching and using icons from F
 - **🔄 Smart Refresh**: Only downloads new icons, skips existing ones
 - **📱 SwiftUI & UIKit**: Works with both SwiftUI and UIKit
 - **🔌 SPM Plugins**: Command plugin for fetching, build plugin for code generation
+- **🤖 GitHub Actions**: Automated icon fetching and code generation
+- **🌐 Cross-Platform**: Same assets can be consumed by any platform
 
 ## 🏗️ Architecture & Flow
 
@@ -75,14 +77,25 @@ dependencies: [
 
 ## 🚀 Quick Start
 
-### 1. Get Your Figma Access Token
+### **Option A: Automated with GitHub Actions (Recommended)**
+
+1. **Fork this repository** or add it as a dependency
+2. **Set up secrets** in your GitHub repository:
+   - `FIGMA_PERSONAL_TOKEN`: Your Figma personal access token
+   - `FIGMA_FILE_ID`: Your Figma file ID
+3. **The workflow runs automatically** every Monday at 9 AM UTC
+4. **Use the generated icons** in your iOS app!
+
+### **Option B: Manual Setup**
+
+#### 1. Get Your Figma Access Token
 
 1. Go to [Figma Settings](https://www.figma.com/settings)
 2. Navigate to **Account** → **Personal Access Tokens**
 3. Click **Create new token**
 4. Give it a name and copy the token
 
-### 2. Extract File ID from Figma URL
+#### 2. Extract File ID from Figma URL
 
 From a Figma URL like:
 ```
@@ -91,7 +104,7 @@ https://www.figma.com/design/T0ahWzB1fWx5BojSMkfiAE/Icons?node-id=0-1&p=f&t=hOWJ
 
 The file ID is: `T0ahWzB1fWx5BojSMkfiAE`
 
-### 3. Fetch Icons
+#### 3. Fetch Icons
 
 ```bash
 # Using the SPM command plugin (recommended)
@@ -103,7 +116,7 @@ export FIGMA_FILE_ID="T0ahWzB1fWx5BojSMkfiAE"
 swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons
 ```
 
-### 4. Build Your Project
+#### 4. Build Your Project
 
 ```bash
 swift build
@@ -254,21 +267,63 @@ struct IconGallery: View {
 
 ## 🔄 Workflow
 
-### **Step 1: Fetch Icons from Figma**
+### **Automated Workflow (GitHub Actions)**
+
+The GitHub Actions workflow automatically:
+1. **Fetches icons** from Figma every Monday at 9 AM UTC
+2. **Generates Swift code** with type-safe enums
+3. **Runs tests** to ensure everything works
+4. **Commits changes** automatically to your repository
+
+### **Manual Workflow**
+
+#### **Step 1: Fetch Icons from Figma**
 ```bash
 swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons --token YOUR_TOKEN --file-id YOUR_FILE_ID
 ```
 
-### **Step 2: Build Your Project**
+#### **Step 2: Build Your Project**
 ```bash
 swift build
 ```
 The build plugin automatically generates Swift code from your downloaded assets.
 
-### **Step 3: Use Icons in Your Code**
+#### **Step 3: Use Icons in Your Code**
 ```swift
 GeneratedIcons.General.generalIcSearchDefault32.image
 ```
+
+## 🤖 GitHub Actions Setup
+
+### **Required Secrets**
+
+Add these secrets to your GitHub repository:
+
+1. **`FIGMA_PERSONAL_TOKEN`**
+   - Go to [Figma Settings](https://www.figma.com/settings)
+   - Navigate to **Account** → **Personal Access Tokens**
+   - Create a new token with file access permissions
+   - Add it as a repository secret
+
+2. **`FIGMA_FILE_ID`**
+   - Extract from your Figma file URL
+   - Example: `https://www.figma.com/design/T0ahWzB1fWx5BojSMkfiAE/Icons`
+   - File ID: `T0ahWzB1fWx5BojSMkfiAE`
+   - Add it as a repository secret
+
+### **Workflow Triggers**
+
+- **Manual**: Run via GitHub Actions UI
+- **Weekly**: Every Monday at 9 AM UTC
+- **Config Changes**: When `icon-fetcher-config.json` is modified
+- **Pull Requests**: When PRs affect the config
+
+### **Benefits**
+
+- **Automation**: No manual icon management needed
+- **Consistency**: Same icons across all platforms
+- **Version Control**: Track icon changes in Git history
+- **Cross-Platform**: Same assets can be consumed by any platform
 
 ## 📋 Command Line Options
 
@@ -381,15 +436,22 @@ swift package plugin --allow-writing-to-package-directory --allow-network-connec
 - ✅ **Type-safe Swift code** generated automatically
 - ✅ **Command plugin** for fetching icons from Figma
 - ✅ **Build plugin** for generating Swift code
+- ✅ **GitHub Actions** for automated icon fetching
 - ✅ **All tests passing** (5/5)
 - ✅ **SwiftUI & UIKit** support
 - ✅ **Smart refresh** implemented
+- ✅ **Cross-platform ready** - same assets for all platforms
 
 ## 🚀 Next Steps
 
-1. **Run the command plugin** to get fresh icons from Figma
-2. **Build your project** to generate Swift code
+1. **Set up GitHub Actions** (if using automated workflow):
+   - Add `FIGMA_PERSONAL_TOKEN` and `FIGMA_FILE_ID` secrets
+   - The workflow will run automatically every Monday
+2. **Or run manually**:
+   - Run the command plugin to get fresh icons from Figma
+   - Build your project to generate Swift code
 3. **Use icons** in your SwiftUI/UIKit views!
+4. **Share with other platforms** - the same SVG assets can be consumed by any platform
 
 ## 📝 Examples
 

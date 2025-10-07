@@ -33,9 +33,5 @@ let package = Package(
             ]
           )
         ),
-    .plugin(
-      name: "IconFetcherPlugin",
-      capability: .buildTool
-    )
   ]
 )
