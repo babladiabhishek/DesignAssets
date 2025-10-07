@@ -262,9 +262,11 @@ public enum GeneratedIcons {
         case flagZa = "flag_ZA"
         case flagZm = "flag_ZM"
         case flagZw = "flag_ZW"        
+        #if canImport(SwiftUI)
         public var image: Image {
             Image(rawValue, bundle: bundle)
         }
+        #endif
         #if canImport(UIKit)
         public var uiImage: UIImage? {
             UIImage(named: rawValue, in: bundle, with: nil)
@@ -572,9 +574,11 @@ public enum GeneratedIcons {
         case icWalkThruFilled32 = "ic_walk_thru_filled_32"
         case icWiFiDefault32 = "ic_wi_fi_default_32"
         case icWiFiFilled32 = "ic_wi_fi_filled_32"        
+        #if canImport(SwiftUI)
         public var image: Image {
             Image(rawValue, bundle: bundle)
         }
+        #endif
         #if canImport(UIKit)
         public var uiImage: UIImage? {
             UIImage(named: rawValue, in: bundle, with: nil)
@@ -587,9 +591,11 @@ public enum GeneratedIcons {
         case ilSqPuzzle2 = "il_sq_puzzle_2"
         case ilSqPuzzle3 = "il_sq_puzzle_3"
         case ilSqPuzzle4 = "il_sq_puzzle_4"        
+        #if canImport(SwiftUI)
         public var image: Image {
             Image(rawValue, bundle: bundle)
         }
+        #endif
         #if canImport(UIKit)
         public var uiImage: UIImage? {
             UIImage(named: rawValue, in: bundle, with: nil)
@@ -1078,9 +1084,11 @@ public enum GeneratedIcons {
         case imWideWelcomeMarketZm = "im_wide_welcome_market_ZM"
         case imWideWelcomeMarketZw = "im_wide_welcome_market_ZW"
         case imWideWelcomeMarketNoflag = "im_wide_welcome_market_noflag"        
+        #if canImport(SwiftUI)
         public var image: Image {
             Image(rawValue, bundle: bundle)
         }
+        #endif
         #if canImport(UIKit)
         public var uiImage: UIImage? {
             UIImage(named: rawValue, in: bundle, with: nil)
@@ -1118,9 +1126,11 @@ public enum GeneratedIcons {
         case mymLogoLightArQa = "mym_logo_light_ar_QA"
         case mymLogoLightDefault = "mym_logo_light_default"
         case mymLogoLightHu = "mym_logo_light_hu"        
+        #if canImport(SwiftUI)
         public var image: Image {
             Image(rawValue, bundle: bundle)
         }
+        #endif
         #if canImport(UIKit)
         public var uiImage: UIImage? {
             UIImage(named: rawValue, in: bundle, with: nil)
@@ -1147,9 +1157,11 @@ public enum GeneratedIcons {
         case mapPinSingleNoMobileOrderDefault = "map_pin_single_no_mobile_order_default"
         case mapPinSingleNoMobileOrderDisabledAndroid = "map_pin_single_no_mobile_order_disabled-android"
         case mapPinSingleNoMobileOrderDisabledIos = "map_pin_single_no_mobile_order_disabled-ios"        
+        #if canImport(SwiftUI)
         public var image: Image {
             Image(rawValue, bundle: bundle)
         }
+        #endif
         #if canImport(UIKit)
         public var uiImage: UIImage? {
             UIImage(named: rawValue, in: bundle, with: nil)
