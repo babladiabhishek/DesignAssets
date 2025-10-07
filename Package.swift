@@ -19,19 +19,17 @@ let package = Package(
       name: "DesignAssetsTests",
       dependencies: ["DesignAssets"]
     ),
-        .plugin(
-          name: "FetchIconsPlugin",
-          capability: .command(
+    .plugin(
+        name: "FetchIconsPlugin",
+        capability: .command(
             intent: .custom(
-              verb: "fetch-icons",
-              description: "Supercharged Figma icon fetcher - downloads all icons from any Figma file"
+                verb: "scan-icons",
+                description: "Scan existing icon assets and generate type-safe Swift code"
             ),
             permissions: [
-              // Explicitly declare we'll access network & write sources
-              .writeToPackageDirectory(reason: "Download and organize icons from Figma into asset catalogs"),
-              .allowNetworkConnections(scope: .all(ports: []), reason: "Fetch icon metadata and SVGs from Figma API")
+                .writeToPackageDirectory(reason: "Generate Swift code from existing icon assets")
             ]
-          )
-        ),
+        )
+    ),
   ]
 )
