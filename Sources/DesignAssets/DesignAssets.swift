@@ -10,52 +10,19 @@ public struct DesignAssets {
     
     // MARK: - Public API
     
-    /// Fetch icons from Figma and integrate them into the package
-    /// - Parameters:
-    ///   - fileId: The Figma file ID
-    ///   - token: Your Figma personal access token
-    ///   - includeVariants: Whether to include different variants of icons
-    ///   - generateAssetCatalog: Whether to generate Xcode asset catalog
-    ///   - generateSwiftCode: Whether to generate Swift enum code
-    /// - Returns: Array of fetched icon information
-    @discardableResult
-    public static func fetchIconsFromFigma(
-        fileId: String,
-        token: String,
-        includeVariants: Bool = true,
-        generateAssetCatalog: Bool = true,
-        generateSwiftCode: Bool = true
-    ) async throws -> [FigmaIconInfo] {
-        
-        // This is a placeholder - in a real implementation, this would:
-        // 1. Call the Figma API
-        // 2. Download images
-        // 3. Generate asset catalogs
-        // 4. Generate Swift code
-        
-        print("🚀 DesignAssets: Use the build script to fetch icons!")
-        print("Run: ./Scripts/fetch-icons.sh")
-        
-        return []
-    }
+        /// Get all available icon names
+        public static var availableIconNames: [String] {
+            return GeneratedIcons.allIcons
+        }
+
+        /// Get all available icon categories
+        public static var iconCategories: [String] {
+            return GeneratedIcons.categories
+        }
     
-    // MARK: - Available Icons
-    
-    /// Get all available icon names
-    public static var availableIconNames: [String] {
-        // Return a sample of available icon names
-        return [
-            "ic_light_bulb_default_32",
-            "ic_search_default_32", 
-            "ic_home_default_32",
-            "ic_location_default_32",
-            "ic_status_success_20"
-        ]
-    }
-    
-    /// Get all available icon categories
-    public static var iconCategories: [String] {
-        return ["General", "Map", "Navigation", "Status"]
+    /// Get all available icon layers
+    public static var iconLayers: [String] {
+        return ["FeelgoodIcons", "MapIcons", "StatusIcons", "GeneralIcons"]
     }
     
     // MARK: - Build Integration

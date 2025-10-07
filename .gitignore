@@ -14,54 +14,20 @@ xcuserdata/
 *.xccheckout
 *.xcscmblueprint
 
-# Swift Package Manager
+# Build generated
 .build/
+DerivedData/
+
+# Sensitive configuration files
+icon-fetcher-config.json
+
+# Generated files
+Sources/DesignAssets/Resources/GeneratedIcons.swift
+Sources/DesignAssets/Resources/.last-figma-modified
+Sources/DesignAssets/Resources/*Icons.xcassets/
+
+# Swift Package Manager
 Packages/
 Package.pins
 Package.resolved
 *.xcodeproj
-.swiftpm/
-
-# CocoaPods
-Pods/
-
-# Carthage
-Carthage/Build/
-
-# fastlane
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots/**/*.png
-fastlane/test_output
-
-# Code Injection
-iOSInjectionProject/
-
-# Temporary files
-*.tmp
-*.temp
-*~
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Thumbnails
-._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
