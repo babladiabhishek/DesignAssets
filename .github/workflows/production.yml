@@ -25,18 +25,74 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests fuzzywuzzy python-levenshtein
         
+    - name: Check for existing assets
+      id: check-assets
+      run: |
+        if [ -d "Sources/DesignAssets/Resources/" ] && find "Sources/DesignAssets/Resources/" -name "*.svg" | grep -q .; then
+          echo "assets_exist=true" >> $GITHUB_OUTPUT
+          echo "📦 Existing SVG assets detected"
+        else
+          echo "assets_exist=false" >> $GITHUB_OUTPUT
+          echo "📭 No existing SVG assets found"
+        fi
+
+    - name: Check Figma file status
+      id: check-figma
+      env:
+        FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
+        FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
+      run: |
+        CURRENT_MODIFIED=$(python3 -c "
+        import requests, os
+        token = os.getenv('FIGMA_PERSONAL_TOKEN')
+        file_id = os.getenv('FIGMA_FILE_ID')
+        url = f'https://api.figma.com/v1/files/{file_id}'
+        headers = {'X-Figma-Token': token}
+        response = requests.get(url, headers=headers)
+        data = response.json()
+        print(data.get('lastModified', ''))
+        ")
+        echo "current_modified=$CURRENT_MODIFIED" >> $GITHUB_OUTPUT
+        echo "📅 Current Figma lastModified: $CURRENT_MODIFIED"
+
+    - name: Check for changes
+      id: check-changes
+      run: |
+        CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
+        if [ -f ".figma_last_fetch.json" ]; then
+          LAST_MODIFIED=$(jq -r '.lastModified' .figma_last_fetch.json)
+          if [ "$CURRENT_MODIFIED" == "$LAST_MODIFIED" ]; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ No changes detected since $LAST_MODIFIED"
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+            echo "🔄 Changes detected: $LAST_MODIFIED → $CURRENT_MODIFIED"
+          fi
+        else
+          echo "no_changes=false" >> $GITHUB_OUTPUT
+          echo "🆕 First run - no previous timestamp found"
+        fi
+
     - name: Fetch icons from Figma
+      if: steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false'
       env:
         FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
         FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
       run: |
         echo "🚀 Starting automated icon fetch from production Figma..."
         python3 fetch_icons_advanced.py
+
+    - name: Update last fetch timestamp
+      if: success() && (steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false')
+      run: |
+        CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
+        echo "{\"lastModified\": \"$CURRENT_MODIFIED\"}" > .figma_last_fetch.json
+        echo "💾 Updated last fetch timestamp: $CURRENT_MODIFIED"
         
     - name: Set up Swift
-      uses: swift-actions/setup-swift@v1.3.0
+      uses: swift-actions/setup-swift@main
       with:
-        swift-version: "5.9"
+        swift-version: 6.2
         
     - name: Generate Swift code from assets
       run: |

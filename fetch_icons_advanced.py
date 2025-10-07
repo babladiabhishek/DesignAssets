@@ -9,6 +9,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
 import sys
+import argparse
 
 # Configure logging
 logging.basicConfig(
@@ -27,6 +28,7 @@ class Config:
     BATCH_SIZE = 10
     RETRY_ATTEMPTS = 3
     RETRY_DELAY = 2
+    LAST_FETCH_FILE = '.figma_last_fetch.json'
 
 def setup_environment() -> bool:
     """Set up environment and validate required configuration."""
@@ -36,6 +38,44 @@ def setup_environment() -> bool:
     os.makedirs(Config.TEMP_DIR, exist_ok=True)
     os.makedirs(Config.OUTPUT_DIR, exist_ok=True)
     return True
+
+def fetch_file_metadata(file_id: str, token: str) -> dict:
+    """Fetch Figma file metadata with retry logic."""
+    url = f"https://api.figma.com/v1/files/{file_id}"
+    headers = {"X-Figma-Token": token}
+    response = fetch_with_retry(url, headers)
+    return response.json()
+
+def check_existing_assets() -> bool:
+    """Check if any SVG assets already exist in the output directory."""
+    if not os.path.exists(Config.OUTPUT_DIR):
+        return False
+    
+    for root, dirs, files in os.walk(Config.OUTPUT_DIR):
+        for file in files:
+            if file.endswith('.svg'):
+                return True
+    return False
+
+def get_last_modified() -> str:
+    """Get the last modified timestamp from the stored file."""
+    if os.path.exists(Config.LAST_FETCH_FILE):
+        try:
+            with open(Config.LAST_FETCH_FILE, 'r') as f:
+                data = json.load(f)
+                return data.get('lastModified', '')
+        except (json.JSONDecodeError, IOError):
+            logger.warning(f"Could not read {Config.LAST_FETCH_FILE}")
+    return ''
+
+def update_last_modified(timestamp: str) -> None:
+    """Update the last modified timestamp in the stored file."""
+    try:
+        with open(Config.LAST_FETCH_FILE, 'w') as f:
+            json.dump({"lastModified": timestamp}, f)
+        logger.info(f"💾 Updated last fetch timestamp: {timestamp}")
+    except IOError as e:
+        logger.warning(f"Could not write {Config.LAST_FETCH_FILE}: {e}")
 
 def fetch_with_retry(url: str, headers: dict, params: dict = None, retries: int = Config.RETRY_ATTEMPTS) -> requests.Response:
     """Fetch with exponential backoff retries."""
@@ -243,6 +283,10 @@ def process_icon_batch(file_id: str, token: str, batch: List[dict], category: st
 
 def main() -> int:
     """Main execution function with pipeline compatibility."""
+    parser = argparse.ArgumentParser(description="Fetch icons from Figma and generate assets.")
+    parser.add_argument('--force', action='store_true', help="Force re-fetch even if assets exist or no changes.")
+    args = parser.parse_args()
+
     if not setup_environment():
         return 1
 
@@ -250,12 +294,21 @@ def main() -> int:
     token = Config.FIGMA_PERSONAL_TOKEN
     
     # Check for force download flag (useful in CI/CD)
-    force_download = os.getenv('FORCE_DOWNLOAD', 'false').lower() == 'true'
+    force_download = os.getenv('FORCE_DOWNLOAD', 'false').lower() == 'true' or args.force
     if force_download:
         logger.info("🔄 Force download enabled - will re-download all icons")
 
+    # Check if fetch is needed
+    current_data = fetch_file_metadata(file_id, token)
+    current_modified = current_data.get('lastModified', '')
+    last_modified = get_last_modified()
+
+    if not force_download and last_modified == current_modified and check_existing_assets():
+        logger.info(f"✅ No changes detected since {last_modified}. Skipping Figma fetch.")
+        return 0
+
     logger.info("🔍 Fetching production Figma file with advanced categorization...")
-    file_data = fetch_figma_file(file_id, token)
+    file_data = current_data  # Reuse metadata fetch
     logger.info(f"📋 File: {file_data.get('name', 'Unknown')}")
     logger.info(f"📅 Last Modified: {file_data.get('lastModified', 'Unknown')}")
 
@@ -335,6 +388,9 @@ def main() -> int:
     logger.info(f"\n🔧 Generating Swift code...")
     generate_swift_code(categorized_icons)
     logger.info("  ✅ Generated Swift code")
+
+    # Update last fetch timestamp
+    update_last_modified(current_modified)
 
     # Return success even with failed downloads since "No image URL" is expected for non-exportable components
     return 0

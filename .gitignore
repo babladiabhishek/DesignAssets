@@ -26,6 +26,9 @@ Sources/DesignAssets/Resources/GeneratedIcons.swift
 Sources/DesignAssets/Resources/.last-figma-modified
 Sources/DesignAssets/Resources/*Icons.xcassets/
 
+# Cache files
+.figma_last_fetch.json
+
 # Swift Package Manager
 Packages/
 Package.pins
