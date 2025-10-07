@@ -83,8 +83,13 @@ dependencies: [
 2. **Set up secrets** in your GitHub repository:
    - `FIGMA_PERSONAL_TOKEN`: Your Figma personal access token
    - `FIGMA_FILE_ID`: Your Figma file ID
-3. **The workflow runs automatically** every Monday at 9 AM UTC
-4. **Use the generated icons** in your iOS app!
+3. **Choose your workflow**:
+   - **Production**: Runs automatically every Monday + manual trigger
+   - **Manual**: On-demand with force refresh option
+4. **The workflow runs automatically** and commits changes to your repository
+5. **Use the generated icons** in your iOS app!
+
+> 📋 **Detailed setup**: See [`.github/README.md`](.github/README.md) for complete GitHub Actions configuration
 
 ### **Option B: Manual Setup**
 
