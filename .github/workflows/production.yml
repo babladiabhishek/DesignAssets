@@ -92,7 +92,7 @@ jobs:
     - name: Set up Swift
       uses: swift-actions/setup-swift@v1.3.0
       with:
-        swift-version: 5.9
+        swift-version: 5.8
 
     - name: Generate Swift code from assets
       run: |
