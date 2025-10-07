@@ -14,6 +14,41 @@ A supercharged Swift Package Manager package for fetching and using icons from F
 - **🛠️ Flexible Configuration**: Customizable options for different use cases
 - **🔄 Smart Refresh**: Only downloads new icons, skips existing ones
 - **📱 SwiftUI & UIKit**: Works with both SwiftUI and UIKit
+- **🔌 SPM Plugins**: Command plugin for fetching, build plugin for code generation
+
+## 🏗️ Architecture & Flow
+
+```mermaid
+graph TD
+    A[Figma File] --> B[Command Plugin: fetch-icons]
+    B --> C[Figma API Call]
+    C --> D[Parse Components]
+    D --> E[Filter Icons]
+    E --> F[Download SVGs]
+    F --> G[Create .xcassets]
+    G --> H[Generate Contents.json]
+    H --> I[Assets Ready]
+    
+    I --> J[Build Plugin: IconFetcherPlugin]
+    J --> K[Scan Existing Assets]
+    K --> L[Parse Icon Names]
+    L --> M[Determine Categories]
+    M --> N[Generate Swift Code]
+    N --> O[Create GeneratedIcons.swift]
+    O --> P[Type-Safe Access Ready]
+    
+    P --> Q[SwiftUI/UIKit Usage]
+    Q --> R[GeneratedIcons.General.ic_search.image]
+    Q --> S[GeneratedIcons.Map.map_pin.image]
+    Q --> T[GeneratedIcons.Status.ic_success.image]
+    Q --> U[GeneratedIcons.Navigation.ic_menu.image]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style J fill:#f3e5f5
+    style P fill:#e8f5e8
+    style Q fill:#fff3e0
+```
 
 ## 📦 Installation
 
@@ -59,17 +94,22 @@ The file ID is: `T0ahWzB1fWx5BojSMkfiAE`
 ### 3. Fetch Icons
 
 ```bash
-# Using the build script (recommended)
-./Scripts/fetch-icons.sh
+# Using the SPM command plugin (recommended)
+swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons --token YOUR_TOKEN --file-id YOUR_FILE_ID
 
 # Using environment variables
 export FIGMA_PERSONAL_TOKEN="your_token_here"
 export FIGMA_FILE_ID="T0ahWzB1fWx5BojSMkfiAE"
-./Scripts/fetch-icons.sh
-
-# Using the SPM plugin
-swift package plugin fetch-icons --token YOUR_TOKEN --file-id T0ahWzB1fWx5BojSMkfiAE
+swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons
 ```
+
+### 4. Build Your Project
+
+```bash
+swift build
+```
+
+The build plugin will automatically generate Swift code from your downloaded assets!
 
 ## 🎨 Usage
 
@@ -83,14 +123,13 @@ struct ContentView: View {
     var body: some View {
         VStack {
             // Use any icon with type safety
-            GeneratedIcons.ic_light_bulb_default_32.image
+            GeneratedIcons.General.generalIcSearchDefault32.image
                 .font(.largeTitle)
             
             // Access by category
-            GeneratedIcons.Status.ic_status_success_16.image
-            GeneratedIcons.Map.map_pin_single_default.image
-            GeneratedIcons.FeelGood.ic_search_default_32.image
-            GeneratedIcons.General.ic_hamburger_default_32.image
+            GeneratedIcons.Status.icStatusSuccess16.image
+            GeneratedIcons.Map.mapPinSingleDefault.image
+            GeneratedIcons.Navigation.icMenuDefault32.image
         }
     }
 }
@@ -98,47 +137,49 @@ struct ContentView: View {
 
 ### **Organized Icon Categories**
 
-Icons are automatically organized into separate `.xcassets` files by category:
+Icons are automatically organized into categories:
 
-- **StatusIcons.xcassets** - Status icons (12x12, 16x16, 20x20)
-- **MapIcons.xcassets** - Map/Order Location icons  
-- **FeelGoodIcons.xcassets** - Main icon set (filled/outline)
-- **GeneralIcons.xcassets** - General purpose icons
+- **General**: General purpose icons (ic_search, ic_add, ic_trash, etc.)
+- **Map**: Map and location icons (map_pin, location, etc.)
+- **Status**: Status and notification icons (success, error, warning, etc.)
+- **Navigation**: Navigation and menu icons (hamburger, back, forward, etc.)
 
 ### **Category-based Access**
 
 ```swift
-// Status Icons
-GeneratedIcons.Status.ic_status_success_16.image
-GeneratedIcons.Status.ic_status_alert_20.image
+// General Icons
+GeneratedIcons.General.generalIcSearchDefault32.image
+GeneratedIcons.General.generalIcAddDefault32.image
+GeneratedIcons.General.generalIcTrashFilled32.image
 
 // Map Icons  
-GeneratedIcons.Map.map_pin_single_default.image
-GeneratedIcons.Map.ic_order_delivery_32.image
+GeneratedIcons.Map.mapIcLocationDefault32.image
+GeneratedIcons.Map.mapIcPinDefault32.image
 
-// Feel Good Icons
-GeneratedIcons.FeelGood.ic_light_bulb_default_32.image
-GeneratedIcons.FeelGood.ic_search_filled_32.image
+// Status Icons
+GeneratedIcons.Status.statusIcSuccess16.image
+GeneratedIcons.Status.statusIcError20.image
 
-// General Icons
-GeneratedIcons.General.ic_hamburger_default_32.image
-GeneratedIcons.General.ic_trash_filled_32.image
+// Navigation Icons
+GeneratedIcons.Navigation.navigationIcMenuDefault32.image
+GeneratedIcons.Navigation.navigationIcBackDefault32.image
 ```
 
 ### **Convenience Accessors**
 
 ```swift
-// Get all icons in a category
-let statusIcons = GeneratedIcons.statusIcons
-let mapIcons = GeneratedIcons.mapIcons
-let feelGoodIcons = GeneratedIcons.feelGoodIcons
-let generalIcons = GeneratedIcons.generalIcons
+// Get all available icon names
+let allIcons = DesignAssets.availableIconNames
+// Returns: ["general_ic_search_default_32", "map_ic_location_default_32", ...]
+
+// Get all categories
+let categories = DesignAssets.iconCategories
+// Returns: ["General", "Map", "Status", "Navigation"]
 
 // Use in SwiftUI
-ForEach(GeneratedIcons.statusIcons, id: \.self) { icon in
-    icon.image
-        .font(.title2)
-        .foregroundColor(.blue)
+ForEach(DesignAssets.availableIconNames, id: \.self) { iconName in
+    Text(iconName)
+        .font(.caption)
 }
 ```
 
@@ -153,7 +194,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         let imageView = UIImageView()
-        imageView.image = GeneratedIcons.ic_light_bulb_default_32.uiImage
+        imageView.image = GeneratedIcons.General.generalIcSearchDefault32.uiImage
         view.addSubview(imageView)
     }
 }
@@ -170,9 +211,11 @@ struct IconGallery: View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4)) {
             ForEach(DesignAssets.availableIconNames, id: \.self) { iconName in
                 VStack {
-                    // Access icon by name
-                    GeneratedIcons.allCases.first { $0.name == iconName }?.image
-                        .font(.title2)
+                    // Access icon by name using reflection
+                    if let category = determineCategory(from: iconName) {
+                        getIconImage(category: category, name: iconName)
+                            .font(.title2)
+                    }
                     
                     Text(iconName)
                         .font(.caption)
@@ -182,64 +225,49 @@ struct IconGallery: View {
             }
         }
     }
-}
-
-struct CategoryView: View {
-    let category: String
     
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(category)
-                .font(.headline)
-            
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6)) {
-                ForEach(GeneratedIcons.All.allCases.filter { $0.category == category }, id: \.self) { icon in
-                    icon.image
-                        .font(.title3)
-                }
-            }
+    private func determineCategory(from iconName: String) -> String? {
+        if iconName.hasPrefix("general_") { return "General" }
+        if iconName.hasPrefix("map_") { return "Map" }
+        if iconName.hasPrefix("status_") { return "Status" }
+        if iconName.hasPrefix("navigation_") { return "Navigation" }
+        return nil
+    }
+    
+    @ViewBuilder
+    private func getIconImage(category: String, name: String) -> some View {
+        switch category {
+        case "General":
+            GeneratedIcons.General.allCases.first { $0.rawValue == name }?.image ?? Image(systemName: "questionmark")
+        case "Map":
+            GeneratedIcons.Map.allCases.first { $0.rawValue == name }?.image ?? Image(systemName: "questionmark")
+        case "Status":
+            GeneratedIcons.Status.allCases.first { $0.rawValue == name }?.image ?? Image(systemName: "questionmark")
+        case "Navigation":
+            GeneratedIcons.Navigation.allCases.first { $0.rawValue == name }?.image ?? Image(systemName: "questionmark")
+        default:
+            Image(systemName: "questionmark")
         }
     }
 }
 ```
 
-## 🔄 Refreshing Icons
+## 🔄 Workflow
 
-### **Option 1: Manual Refresh**
-
+### **Step 1: Fetch Icons from Figma**
 ```bash
-# Fetch fresh icons from Figma
-./Scripts/fetch-icons.sh
+swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons --token YOUR_TOKEN --file-id YOUR_FILE_ID
+```
 
-# Build your project
+### **Step 2: Build Your Project**
+```bash
 swift build
 ```
+The build plugin automatically generates Swift code from your downloaded assets.
 
-### **Option 2: Xcode Build Phase**
-
-1. Add a **Run Script Phase** to your Xcode project
-2. Add this script:
-   ```bash
-   cd "$SRCROOT"
-   ./Scripts/fetch-icons.sh
-   ```
-
-### **Option 3: Force Download All Icons**
-
-```bash
-# Force download all icons (even existing ones)
-FORCE_DOWNLOAD=true ./Scripts/fetch-icons.sh
-```
-
-### **Option 4: Environment Variables**
-
-Set these environment variables to customize the fetch:
-
-```bash
-export FIGMA_PERSONAL_TOKEN="your_token_here"
-export FIGMA_FILE_ID="your_file_id_here"
-export MAX_ICONS="100"
-export FORCE_DOWNLOAD="false"
+### **Step 3: Use Icons in Your Code**
+```swift
+GeneratedIcons.General.generalIcSearchDefault32.image
 ```
 
 ## 📋 Command Line Options
@@ -250,50 +278,67 @@ swift package plugin fetch-icons [options]
 Options:
   --token <token>        Figma personal access token
   --file-id <file-id>    Figma file ID
-  --max-icons <count>    Maximum number of icons to fetch (default: 50)
-  --output <path>        Output directory (default: Sources/DesignAssets/Resources)
   --help                 Show help information
 ```
 
 ## 🛠️ Configuration
 
-The package uses these default values:
+Create an `icon-fetcher-config.json` file in your project root:
 
-- **File ID**: `T0ahWzB1fWx5BojSMkfiAE`
-- **Max Icons**: 50 (configurable)
-- **Format**: PDF
-- **Scale**: 1x
-- **Force Download**: false (only download new icons)
+```json
+{
+  "figma": {
+    "fileId": "T0ahWzB1fWx5BojSMkfiAE",
+    "personalToken": "your_token_here"
+  },
+  "output": {
+    "basePath": "Sources/DesignAssets/Resources",
+    "autoDetectLayers": true,
+    "createAssetCatalogs": true
+  },
+  "filtering": {
+    "iconPrefixes": ["ic_", "map_", "status_", "navigation_"],
+    "iconKeywords": ["icon", "ui", "button", "action"],
+    "excludeSizeIndicators": ["_12", "_16", "_20", "_24", "_32"]
+  }
+}
+```
+
+**Security Note**: Add `icon-fetcher-config.json` to your `.gitignore` if it contains sensitive tokens. Use environment variables instead:
+
+```bash
+export FIGMA_PERSONAL_TOKEN="your_token_here"
+export FIGMA_FILE_ID="your_file_id_here"
+```
 
 ## 📁 File Structure
 
 ```
 Sources/DesignAssets/
-├── Resources/
-│   ├── Icons.xcassets/          # Xcode asset catalog
-│   └── GeneratedIcons.swift     # Swift enum definitions
-└── DesignAssets.swift           # Main package API
-
-Scripts/
-└── fetch-icons.sh              # Icon fetching script
+├── DesignAssets.swift          # Main package API
+├── GeneratedIcons.swift        # Generated type-safe code
+└── Resources/
+    └── Icons.xcassets/         # Downloaded icon assets
+        ├── general_ic_*.imageset/
+        ├── map_ic_*.imageset/
+        ├── status_ic_*.imageset/
+        └── navigation_ic_*.imageset/
 
 Plugins/
-└── FetchIconsPlugin/           # SPM plugin for icon fetching
+├── FetchIconsPlugin/           # Command plugin for fetching
+│   └── Plugin.swift
+└── IconFetcherPlugin/          # Build plugin for code generation
     └── Plugin.swift
-
-Examples/
-├── BasicUsageExample.swift     # Simple usage examples
-└── IntegrationGuideExample.swift # Complete integration guide
 ```
 
 ## 🎯 Icon Categories
 
 Icons are automatically categorized based on naming patterns:
 
-- **General**: `ui`, `action`, `button`, `icon` (default category)
-- **Map**: `map`, `location`, `pin`
-- **Status**: `status`, `notification`, `alert`
-- **Navigation**: `nav`, `navigation`, `menu`
+- **General**: `general_*` - General purpose icons (search, add, trash, etc.)
+- **Map**: `map_*` - Map and location icons (pin, location, etc.)
+- **Status**: `status_*` - Status and notification icons (success, error, warning, etc.)
+- **Navigation**: `navigation_*` - Navigation and menu icons (menu, back, forward, etc.)
 
 ## 🔧 Troubleshooting
 
@@ -312,9 +357,13 @@ Icons are automatically categorized based on naming patterns:
    - Check that the Figma file contains icon components
    - Ensure your token has access to the file
 
-4. **"Images corrupted"**
-   - This is usually fixed automatically by the two-step download process
-   - Try running the script again
+4. **Build plugin not generating code**
+   - Make sure you've run the command plugin first to download assets
+   - Check that the build plugin is enabled in Package.swift
+
+5. **Permission errors**
+   - Use `--allow-writing-to-package-directory` flag for command plugin
+   - Use `--allow-network-connections all` flag for network access
 
 ### **Debug Mode**
 
@@ -322,29 +371,31 @@ Enable debug logging:
 
 ```bash
 export DEBUG=true
-./Scripts/fetch-icons.sh
+swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons --token YOUR_TOKEN --file-id YOUR_FILE_ID
 ```
 
 ## 🎯 Current Status
 
-- ✅ **110 working icons** downloaded
-- ✅ **2,245 Swift enum cases** generated
-- ✅ **Build script** working perfectly
-- ✅ **SPM integration** ready
+- ✅ **126 working icons** downloaded and organized
+- ✅ **4 categories** (General, Map, Status, Navigation)
+- ✅ **Type-safe Swift code** generated automatically
+- ✅ **Command plugin** for fetching icons from Figma
+- ✅ **Build plugin** for generating Swift code
+- ✅ **All tests passing** (5/5)
+- ✅ **SwiftUI & UIKit** support
 - ✅ **Smart refresh** implemented
-- ✅ **All tests passing** (8/8)
 
 ## 🚀 Next Steps
 
-1. **Run the script** to get fresh icons: `./Scripts/fetch-icons.sh`
-2. **Build your project**: `swift build`
-3. **Use icons** in your SwiftUI views!
+1. **Run the command plugin** to get fresh icons from Figma
+2. **Build your project** to generate Swift code
+3. **Use icons** in your SwiftUI/UIKit views!
 
 ## 📝 Examples
 
-Check out the `Examples/` directory for complete usage examples:
-- **BasicUsageExample.swift** - Simple icon usage in your app
-- **IntegrationGuideExample.swift** - Complete integration guide with Figma setup
+Check out the test files for complete usage examples:
+- **DesignAssetsTests.swift** - Comprehensive test suite
+- **GeneratedIcons.swift** - Generated type-safe code structure
 
 ## 📄 License
 

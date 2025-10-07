@@ -143,60 +143,6 @@ private func printHelp() {
 }
 
 
-// MARK: - Mock Data for Testing
-
-private func createMockIcons() -> [IconInfo] {
-    return [
-        IconInfo(
-            id: "1",
-            name: "home_icon",
-            category: "General",
-            variant: "filled",
-            nodeId: "1:1",
-            filePath: "",
-            size: CGSize(width: 24, height: 24),
-            isComponent: true,
-            thumbnailUrl: nil,
-            description: "Home icon"
-        ),
-        IconInfo(
-            id: "2",
-            name: "search_icon",
-            category: "General",
-            variant: "outline",
-            nodeId: "1:2",
-            filePath: "",
-            size: CGSize(width: 24, height: 24),
-            isComponent: true,
-            thumbnailUrl: nil,
-            description: "Search icon"
-        ),
-        IconInfo(
-            id: "3",
-            name: "location_pin",
-            category: "Map",
-            variant: "filled",
-            nodeId: "1:3",
-            filePath: "",
-            size: CGSize(width: 24, height: 24),
-            isComponent: true,
-            thumbnailUrl: nil,
-            description: "Location pin icon"
-        ),
-        IconInfo(
-            id: "4",
-            name: "success_icon",
-            category: "Status",
-            variant: "filled",
-            nodeId: "1:4",
-            filePath: "",
-            size: CGSize(width: 24, height: 24),
-            isComponent: true,
-            thumbnailUrl: nil,
-            description: "Success status icon"
-        )
-    ]
-}
 
 // MARK: - Asset Catalog Generation
 
@@ -250,7 +196,6 @@ private func generateSwiftCodeFiles(icons: [IconInfo], outputDirectory: URL) thr
         
         // MARK: - Icon Access
         
-        @available(iOS 13.0, macOS 10.15, *)
         public static func icon(named name: String) -> Image? {
             #if canImport(SwiftUI)
             return Image(name, bundle: bundle)
@@ -262,6 +207,8 @@ private func generateSwiftCodeFiles(icons: [IconInfo], outputDirectory: URL) thr
         public static func uiImage(named name: String) -> Any? {
             #if canImport(UIKit)
             return UIImage(named: name, in: bundle, compatibleWith: nil)
+            #elseif canImport(AppKit)
+            return NSImage(named: name)
             #else
             return nil
             #endif
@@ -291,7 +238,6 @@ private func generateSwiftCodeFiles(icons: [IconInfo], outputDirectory: URL) thr
         
         swiftCode += """
         
-                @available(iOS 13.0, macOS 10.15, *)
                 public var image: Image? {
                     return GeneratedIcons.icon(named: self.rawValue)
                 }
@@ -324,33 +270,12 @@ private func generateSwiftCodeFiles(icons: [IconInfo], outputDirectory: URL) thr
     
     swiftCode += """
     
-            @available(iOS 13.0, macOS 10.15, *)
             public var image: Image? {
                 return GeneratedIcons.icon(named: self.rawValue)
             }
             
             public var uiImage: Any? {
                 return GeneratedIcons.uiImage(named: self.rawValue)
-            }
-            
-            public var category: String {
-                switch self {
-    """
-    
-    for (category, categoryIcons) in groupedIcons {
-        for icon in categoryIcons {
-            let caseName = icon.name.replacingOccurrences(of: "-", with: "_")
-            swiftCode += """
-            
-            case .\(caseName):
-                return "\(category)"
-            """
-        }
-    }
-    
-    swiftCode += """
-    
-                }
             }
         }
     }
@@ -383,10 +308,11 @@ private func fetchIconsFromFigma(
     // Download each icon
     var downloadedIcons: [FigmaIconInfo] = []
     
-    for component in iconComponents {
+    for (component, nodeId) in iconComponents {
         do {
             let iconInfo = try await downloadIcon(
                 component: component,
+                nodeId: nodeId,
                 fileId: fileId,
                 token: token,
                 outputDirectory: outputDirectory
@@ -424,11 +350,9 @@ struct FigmaComponent: Codable {
     let key: String
     let name: String
     let description: String?
-    let nodeId: String
     
     enum CodingKeys: String, CodingKey {
         case key, name, description
-        case nodeId = "node_id"
     }
 }
 
@@ -463,11 +387,11 @@ struct FigmaIconInfo {
         return try decoder.decode(FigmaFile.self, from: data)
     }
     
-    private func findIconComponents(in file: FigmaFile) -> [FigmaComponent] {
-        var iconComponents: [FigmaComponent] = []
+    private func findIconComponents(in file: FigmaFile) -> [(FigmaComponent, String)] {
+        var iconComponents: [(FigmaComponent, String)] = []
         
         // Look for components that match icon naming patterns
-        for (_, component) in file.components {
+        for (nodeId, component) in file.components {
             let name = component.name.lowercased()
             
             // Check if it looks like an icon (starts with ic_ or contains icon keywords)
@@ -480,7 +404,7 @@ struct FigmaIconInfo {
            name.contains("status") ||
            name.contains("nav") ||
            name.contains("ui") {
-                iconComponents.append(component)
+                iconComponents.append((component, nodeId))
             }
         }
         
@@ -489,6 +413,7 @@ struct FigmaIconInfo {
     
     private func downloadIcon(
         component: FigmaComponent,
+        nodeId: String,
         fileId: String,
         token: String,
         outputDirectory: URL
@@ -496,7 +421,7 @@ struct FigmaIconInfo {
         // Step 1: Get image URL from Figma API
         let imageUrl = try await getFigmaImageUrl(
             fileId: fileId,
-            nodeId: component.nodeId,
+            nodeId: nodeId,
             token: token
         )
         
@@ -543,7 +468,7 @@ struct FigmaIconInfo {
             name: categorizedAssetName,
             category: category,
             variant: variant,
-            nodeId: component.nodeId,
+            nodeId: nodeId,
             filePath: imagesetDir.path,
             size: CGSize(width: 32, height: 32),
             isComponent: true,
