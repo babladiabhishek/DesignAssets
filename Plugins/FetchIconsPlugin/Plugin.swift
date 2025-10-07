@@ -4,6 +4,11 @@ import PackagePlugin
 import XcodeProjectPlugin
 #endif
 
+// Ensure Foundation networking is available
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 // MARK: - Data Models for Plugin
 
 struct IconInfo {
