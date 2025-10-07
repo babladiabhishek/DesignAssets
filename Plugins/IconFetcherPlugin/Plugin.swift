@@ -10,7 +10,7 @@ struct IconFetcherPlugin: BuildToolPlugin {
         
         let tempOutputDir = context.pluginWorkDirectory // Use temp dir for generation
         let finalOutputDir = context.package.directory.appending(subpath: "Sources/DesignAssets/Resources") // Target dir (read-only during build)
-        let scriptPath = tempOutputDir.appending("fetch_icons.swift")
+        let scriptPath = tempOutputDir.appending("fetch_icons.sh")
         
         // Read configuration
         let configPath = context.package.directory.appending("icon-fetcher-config.json")
@@ -40,78 +40,45 @@ struct IconFetcherPlugin: BuildToolPlugin {
 
         let forceDownload = ProcessInfo.processInfo.environment["FORCE_DOWNLOAD"] == "true"
 
-        // Create a script that generates Swift code from existing assets in temp directory
+        // Create a shell script that generates and executes Swift code
         let scriptContent = """
+            #!/bin/bash
+            set -e
+            
+            TEMP_OUTPUT_DIR="\(tempOutputDir.string)"
+            FINAL_OUTPUT_DIR="\(finalOutputDir.string)"
+            SWIFT_SCRIPT="$TEMP_OUTPUT_DIR/icon_generator.swift"
+            SWIFT_FILE="$TEMP_OUTPUT_DIR/GeneratedIcons.swift"
+            FINAL_SWIFT_FILE="$FINAL_OUTPUT_DIR/../GeneratedIcons.swift"
+            
+            echo "🔍 Scanning for existing icon assets..."
+            
+            # Check if Resources directory exists
+            if [ ! -d "$FINAL_OUTPUT_DIR" ]; then
+                echo "⚠️ No Resources directory found. Run 'swift package plugin fetch-icons' first to download icons."
+                exit 0
+            fi
+            
+            # Create Swift script with proper structure (no top-level code)
+            cat > "$SWIFT_SCRIPT" << 'EOF'
             import Foundation
-
+            
             @main
             struct IconGenerator {
                 static func main() {
                     let tempOutputDir = "\(tempOutputDir.string)"
                     let finalOutputDir = "\(finalOutputDir.string)"
                     
-                    // Camel case function
-                    func camelCase(_ string: String) -> String {
-                        let components = string.components(separatedBy: "_")
-                        guard let first = components.first else { return string }
-                        return first + components.dropFirst().map { $0.capitalized }.joined()
-                    }
-                    
                     print("🔍 Scanning for existing icon assets...")
                     
-                    // Scan for existing .xcassets directories in the final output directory
-                    let fm = FileManager.default
-                    let resourcesURL = URL(fileURLWithPath: finalOutputDir)
-                    
-                    guard fm.fileExists(atPath: resourcesURL.path) else {
-                        print("⚠️ No Resources directory found. Run 'swift package plugin fetch-icons' first to download icons.")
-                        exit(0)
-                    }
-                    
-                    var allIcons: [(String, String)] = [] // (name, category)
-                    var categories: Set<String> = []
-                    
-                    // Helper function to determine category from icon name
-                    func determineCategory(from iconName: String) -> String {
-                        if iconName.hasPrefix("general_") {
-                            return "General"
-                        } else if iconName.hasPrefix("map_") {
-                            return "Map"
-                        } else if iconName.hasPrefix("status_") {
-                            return "Status"
-                        } else if iconName.hasPrefix("navigation_") {
-                            return "Navigation"
-                        } else {
-                            return "General"
-                        }
-                    }
-                    
-                    // Find all .xcassets directories
-                    let enumerator = fm.enumerator(at: resourcesURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
-                    
-                    while let fileURL = enumerator?.nextObject() as? URL {
-                        if fileURL.pathExtension == "xcassets" {
-                            // Find all .imageset directories
-                            let imagesetEnumerator = fm.enumerator(at: fileURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
-                            
-                            while let imagesetURL = imagesetEnumerator?.nextObject() as? URL {
-                                if imagesetURL.pathExtension == "imageset" {
-                                    let iconName = imagesetURL.deletingPathExtension().lastPathComponent
-                                    
-                                    // Parse category from icon name (e.g., "general_ic_search_default_32" -> "General")
-                                    let category = determineCategory(from: iconName)
-                                    categories.insert(category)
-                                    allIcons.append((iconName, category))
-                                }
-                            }
-                        }
-                    }
+                    let allIcons = scanForIcons(in: finalOutputDir)
                     
                     if allIcons.isEmpty {
                         print("⚠️ No icon assets found. Run 'swift package plugin fetch-icons' first to download icons.")
-                        exit(0)
+                        return
                     }
                     
+                    let categories = Set(allIcons.map { $0.1 })
                     print("📦 Found \\(allIcons.count) icons in \\(categories.count) categories")
                     
                     // Generate Swift code to temp directory
@@ -177,7 +144,74 @@ struct IconFetcherPlugin: BuildToolPlugin {
                         exit(1)
                     }
                 }
+                
+                // Helper functions inside the struct
+                static func camelCase(_ string: String) -> String {
+                    let components = string.components(separatedBy: "_")
+                    guard let first = components.first else { return string }
+                    return first + components.dropFirst().map { $0.capitalized }.joined()
+                }
+                
+                static func determineCategory(from iconName: String) -> String {
+                    if iconName.hasPrefix("general_") {
+                        return "General"
+                    } else if iconName.hasPrefix("map_") {
+                        return "Map"
+                    } else if iconName.hasPrefix("status_") {
+                        return "Status"
+                    } else if iconName.hasPrefix("navigation_") {
+                        return "Navigation"
+                    } else {
+                        return "General"
+                    }
+                }
+                
+                static func scanForIcons(in directory: String) -> [(String, String)] {
+                    let fm = FileManager.default
+                    let resourcesURL = URL(fileURLWithPath: directory)
+                    
+                    guard fm.fileExists(atPath: resourcesURL.path) else {
+                        return []
+                    }
+                    
+                    var allIcons: [(String, String)] = []
+                    var categories: Set<String> = []
+                    
+                    // Find all .xcassets directories
+                    let enumerator = fm.enumerator(at: resourcesURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+                    
+                    while let fileURL = enumerator?.nextObject() as? URL {
+                        if fileURL.pathExtension == "xcassets" {
+                            // Find all .imageset directories
+                            let imagesetEnumerator = fm.enumerator(at: fileURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+                            
+                            while let imagesetURL = imagesetEnumerator?.nextObject() as? URL {
+                                if imagesetURL.pathExtension == "imageset" {
+                                    let iconName = imagesetURL.deletingPathExtension().lastPathComponent
+                                    let category = determineCategory(from: iconName)
+                                    categories.insert(category)
+                                    allIcons.append((iconName, category))
+                                }
+                            }
+                        }
+                    }
+                    
+                    return allIcons
+                }
             }
+            EOF
+            
+            # Execute Swift script
+            swift "$SWIFT_SCRIPT"
+            
+            # Copy GeneratedIcons.swift to Sources directory
+            if [ -f "$SWIFT_FILE" ]; then
+                cp "$SWIFT_FILE" "$FINAL_SWIFT_FILE"
+                echo "✅ Copied GeneratedIcons.swift to Sources directory"
+            fi
+            
+            # Clean up temporary Swift script to avoid build conflicts
+            rm -f "$SWIFT_SCRIPT"
             """
         
         try scriptContent.data(using: .utf8)?.write(to: URL(filePath: scriptPath.string))
@@ -189,20 +223,11 @@ struct IconFetcherPlugin: BuildToolPlugin {
         try chmod.run()
         chmod.waitUntilExit()
 
-            let executablePath = tempOutputDir.appending("icon_generator")
-            
             return [
                 .prebuildCommand(
                     displayName: "🎨 Generate Icons from Assets",
-                    executable: Path("/usr/bin/swiftc"),
-                    arguments: ["-parse-as-library", "-o", executablePath.string, scriptPath.string],
-                    environment: [:],
-                    outputFilesDirectory: tempOutputDir
-                ),
-                .prebuildCommand(
-                    displayName: "🎨 Run Icon Generator",
-                    executable: executablePath,
-                    arguments: [],
+                    executable: Path("/bin/bash"),
+                    arguments: [scriptPath.string],
                     environment: [:],
                     outputFilesDirectory: tempOutputDir
                 )

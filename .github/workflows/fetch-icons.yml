@@ -1,0 +1,312 @@
+name: 🎨 Fetch Icons from Figma
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
+  push:
+    paths:
+      - 'icon-fetcher-config.json'
+      - '.github/workflows/fetch-icons.yml'
+  pull_request:
+    paths:
+      - 'icon-fetcher-config.json'
+      - '.github/workflows/fetch-icons.yml'
+
+jobs:
+  fetch-icons:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🏗️ Setup Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: "6.0"
+      
+      - name: 🔍 Check for Figma changes
+        id: check-changes
+        run: |
+          # Check if we need to fetch icons
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "manual_trigger=true" >> $GITHUB_OUTPUT
+            echo "🔄 Manual trigger - fetching icons"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "scheduled_trigger=true" >> $GITHUB_OUTPUT
+            echo "⏰ Scheduled trigger - fetching icons"
+          elif [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "config_changed=true" >> $GITHUB_OUTPUT
+            echo "📝 Config changed - fetching icons"
+          else
+            echo "no_trigger=true" >> $GITHUB_OUTPUT
+            echo "ℹ️ No trigger condition met - skipping"
+          fi
+      
+      - name: 🎨 Fetch Icons from Figma
+        if: steps.check-changes.outputs.manual_trigger == 'true' || steps.check-changes.outputs.scheduled_trigger == 'true' || steps.check-changes.outputs.config_changed == 'true'
+        run: |
+          echo "🚀 Starting icon fetch process..."
+          
+          # Set environment variables
+          export FIGMA_PERSONAL_TOKEN="${{ secrets.FIGMA_PERSONAL_TOKEN }}"
+          export FIGMA_FILE_ID="${{ secrets.FIGMA_FILE_ID }}"
+          
+          # Run the fetch command
+          swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons \
+            --token "$FIGMA_PERSONAL_TOKEN" \
+            --file-id "$FIGMA_FILE_ID"
+          
+          echo "✅ Icons fetched successfully!"
+      
+      - name: 📊 Generate Swift Code
+        if: steps.check-changes.outputs.manual_trigger == 'true' || steps.check-changes.outputs.scheduled_trigger == 'true' || steps.check-changes.outputs.config_changed == 'true'
+        run: |
+          echo "🔧 Generating Swift code from assets..."
+          
+          # Create a simple script to generate GeneratedIcons.swift
+          cat > generate_icons.swift << 'EOF'
+          import Foundation
+          
+          @main
+          struct IconGenerator {
+              static func main() {
+                  let resourcesDir = "Sources/DesignAssets/Resources"
+                  let outputFile = "Sources/DesignAssets/GeneratedIcons.swift"
+                  
+                  print("🔍 Scanning for existing icon assets...")
+                  
+                  let fm = FileManager.default
+                  let resourcesURL = URL(fileURLWithPath: resourcesDir)
+                  
+                  guard fm.fileExists(atPath: resourcesURL.path) else {
+                      print("⚠️ No Resources directory found")
+                      return
+                  }
+                  
+                  var allIcons: [(String, String)] = []
+                  var categories: Set<String> = []
+                  
+                  // Helper functions
+                  func camelCase(_ string: String) -> String {
+                      let components = string.components(separatedBy: "_")
+                      guard let first = components.first else { return string }
+                      return first + components.dropFirst().map { $0.capitalized }.joined()
+                  }
+                  
+                  func determineCategory(from iconName: String) -> String {
+                      if iconName.hasPrefix("general_") { return "General" }
+                      if iconName.hasPrefix("map_") { return "Map" }
+                      if iconName.hasPrefix("status_") { return "Status" }
+                      if iconName.hasPrefix("navigation_") { return "Navigation" }
+                      return "General"
+                  }
+                  
+                  // Find all .xcassets directories
+                  let enumerator = fm.enumerator(at: resourcesURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+                  
+                  while let fileURL = enumerator?.nextObject() as? URL {
+                      if fileURL.pathExtension == "xcassets" {
+                          let imagesetEnumerator = fm.enumerator(at: fileURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+                          
+                          while let imagesetURL = imagesetEnumerator?.nextObject() as? URL {
+                              if imagesetURL.pathExtension == "imageset" {
+                                  let iconName = imagesetURL.deletingPathExtension().lastPathComponent
+                                  let category = determineCategory(from: iconName)
+                                  categories.insert(category)
+                                  allIcons.append((iconName, category))
+                              }
+                          }
+                      }
+                  }
+                  
+                  if allIcons.isEmpty {
+                      print("⚠️ No icon assets found")
+                      return
+                  }
+                  
+                  print("📦 Found \(allIcons.count) icons in \(categories.count) categories")
+                  
+                  // Generate Swift code
+                  let swiftFile = URL(fileURLWithPath: outputFile)
+                  var swiftCode = """
+                  import Foundation
+                  #if canImport(SwiftUI)
+                  import SwiftUI
+                  #endif
+                  #if canImport(UIKit)
+                  import UIKit
+                  #endif
+                  
+                  public enum GeneratedIcons {
+                      public static let bundle = Bundle.module
+                  """
+                  
+                  // Group icons by category
+                  let groupedIcons = Dictionary(grouping: allIcons) { $0.1 }
+                  
+                  for category in categories.sorted() {
+                      let enumName = category.replacingOccurrences(of: " ", with: "")
+                      swiftCode += "\n\n    public enum \(enumName): String, CaseIterable {"
+                      
+                      if let categoryIcons = groupedIcons[category] {
+                          for (iconName, _) in categoryIcons.sorted(by: { $0.0 < $1.0 }) {
+                              let camelCaseName = camelCase(iconName)
+                              swiftCode += "\n        case \(camelCaseName) = \"\(iconName)\""
+                          }
+                      }
+                      
+                      swiftCode += """
+                      
+                      public var image: Image {
+                          Image(rawValue, bundle: bundle)
+                      }
+                      #if canImport(UIKit)
+                      public var uiImage: UIImage? {
+                          UIImage(named: rawValue, in: bundle, with: nil)
+                      }
+                      #endif
+                  }
+                  """
+                  }
+                  
+                  swiftCode += """
+
+                  
+                  // MARK: - Helper Extensions
+                  
+                  extension GeneratedIcons {
+                      public static var allIcons: [String] {
+                          return [
+                  """
+                  
+                  for (iconName, _) in allIcons.sorted(by: { $0.0 < $1.0 }) {
+                      swiftCode += "\n                              \"\(iconName)\","
+                  }
+                  
+                  swiftCode += """
+
+                          ]
+                      }
+                      
+                      public static var categories: [String] {
+                          return [
+                  """
+                  
+                  for category in categories.sorted() {
+                      swiftCode += "\n                              \"\(category)\","
+                  }
+                  
+                  swiftCode += """
+
+                          ]
+                      }
+                  }
+                  """
+                  
+                  do {
+                      try swiftCode.write(to: swiftFile, atomically: true, encoding: .utf8)
+                      print("✅ Generated Swift code at \(swiftFile.path)")
+                      print("🎉 Generated code for \(allIcons.count) icons successfully!")
+                  } catch {
+                      print("❌ Error writing Swift code: \(error)")
+                      exit(1)
+                  }
+              }
+          }
+          EOF
+          
+          # Run the Swift script
+          swift generate_icons.swift
+          
+          # Clean up
+          rm generate_icons.swift
+          
+          echo "✅ Swift code generated successfully!"
+      
+      - name: 🧪 Test Build
+        if: steps.check-changes.outputs.manual_trigger == 'true' || steps.check-changes.outputs.scheduled_trigger == 'true' || steps.check-changes.outputs.config_changed == 'true'
+        run: |
+          echo "🧪 Testing build..."
+          swift build
+          echo "✅ Build test passed!"
+      
+      - name: 🧪 Run Tests
+        if: steps.check-changes.outputs.manual_trigger == 'true' || steps.check-changes.outputs.scheduled_trigger == 'true' || steps.check-changes.outputs.config_changed == 'true'
+        run: |
+          echo "🧪 Running tests..."
+          swift test
+          echo "✅ All tests passed!"
+      
+      - name: 📝 Create Summary
+        if: steps.check-changes.outputs.manual_trigger == 'true' || steps.check-changes.outputs.scheduled_trigger == 'true' || steps.check-changes.outputs.config_changed == 'true'
+        run: |
+          echo "📊 Creating summary..."
+          
+          # Count icons
+          ICON_COUNT=$(find Sources/DesignAssets/Resources -name "*.imageset" | wc -l)
+          
+          # Count categories
+          CATEGORIES=$(grep -o "public enum [A-Za-z]*:" Sources/DesignAssets/GeneratedIcons.swift | wc -l)
+          
+          echo "## 🎨 Icon Fetch Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Total Icons | $ICON_COUNT |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📂 Categories | $CATEGORIES |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🕒 Timestamp | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Categories Found:" >> $GITHUB_STEP_SUMMARY
+          grep -o "public enum [A-Za-z]*:" Sources/DesignAssets/GeneratedIcons.swift | sed 's/public enum /- /' | sed 's/://' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📱 Usage:" >> $GITHUB_STEP_SUMMARY
+          echo "```swift" >> $GITHUB_STEP_SUMMARY
+          echo "import DesignAssets" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "// SwiftUI" >> $GITHUB_STEP_SUMMARY
+          echo "GeneratedIcons.General.generalIcSearchDefault32.image" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "// UIKit" >> $GITHUB_STEP_SUMMARY
+          echo "GeneratedIcons.General.generalIcSearchDefault32.uiImage" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+      
+      - name: 💾 Commit Changes
+        if: steps.check-changes.outputs.manual_trigger == 'true' || steps.check-changes.outputs.scheduled_trigger == 'true' || steps.check-changes.outputs.config_changed == 'true'
+        run: |
+          echo "💾 Committing changes..."
+          
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Add changes
+          git add Sources/DesignAssets/GeneratedIcons.swift
+          git add Sources/DesignAssets/Resources/
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "ℹ️ No changes to commit"
+          else
+            git commit -m "🤖 Auto-update icons from Figma
+
+            - Fetched latest icons from Figma
+            - Generated updated GeneratedIcons.swift
+            - Updated asset catalogs
+            
+            Triggered by: ${{ github.event_name }}
+            Workflow: ${{ github.workflow }}
+            Run: ${{ github.run_number }}"
+            
+            echo "✅ Changes committed successfully!"
+          fi
+      
+      - name: 🚀 Push Changes
+        if: steps.check-changes.outputs.manual_trigger == 'true' || steps.check-changes.outputs.scheduled_trigger == 'true' || steps.check-changes.outputs.config_changed == 'true'
+        run: |
+          echo "🚀 Pushing changes..."
+          git push
+          echo "✅ Changes pushed successfully!"
