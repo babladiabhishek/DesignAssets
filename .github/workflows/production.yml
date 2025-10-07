@@ -6,9 +6,6 @@ on:
     - cron: '0 9 * * 1'  # Run every Monday at 9 AM UTC
   push:
     branches: [ main ]
-    paths:
-      - 'fetch_icons_advanced.py'
-      - '.github/workflows/fetch-icons-production.yml'
 
 jobs:
   fetch-icons:
