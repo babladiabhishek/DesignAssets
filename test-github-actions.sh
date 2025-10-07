@@ -1,37 +1,14 @@
 #!/bin/bash
 
 # Test script to simulate GitHub Actions workflow locally
-# This script tests the same steps that the GitHub Actions workflow performs
+# This script tests asset scanning and Swift code generation
 
 set -e
 
-echo "🤖 Testing GitHub Actions workflow locally..."
+echo "🤖 Testing asset scanning and Swift code generation..."
 
-# Check if required environment variables are set
-if [ -z "$FIGMA_PERSONAL_TOKEN" ]; then
-    echo "❌ FIGMA_PERSONAL_TOKEN environment variable is not set"
-    echo "Please set it with: export FIGMA_PERSONAL_TOKEN='your_token_here'"
-    exit 1
-fi
-
-if [ -z "$FIGMA_FILE_ID" ]; then
-    echo "❌ FIGMA_FILE_ID environment variable is not set"
-    echo "Please set it with: export FIGMA_FILE_ID='your_file_id_here'"
-    exit 1
-fi
-
-echo "✅ Environment variables are set"
-
-# Step 1: Fetch Icons from Figma
-echo "🎨 Fetching icons from Figma..."
-swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons \
-    --token "$FIGMA_PERSONAL_TOKEN" \
-    --file-id "$FIGMA_FILE_ID"
-
-echo "✅ Icons fetched successfully!"
-
-# Step 2: Generate Swift Code
-echo "🔧 Generating Swift code from assets..."
+# Step 1: Generate Swift Code from Existing Assets
+echo "🔧 Generating Swift code from existing assets..."
 cat > generate_icons.swift << 'EOF'
 import Foundation
 
@@ -186,17 +163,17 @@ rm generate_icons.swift
 
 echo "✅ Swift code generated successfully!"
 
-# Step 3: Test Build
+# Step 2: Test Build
 echo "🧪 Testing build..."
 swift build
 echo "✅ Build test passed!"
 
-# Step 4: Run Tests
+# Step 3: Run Tests
 echo "🧪 Running tests..."
 swift test
 echo "✅ All tests passed!"
 
-# Step 5: Create Summary
+# Step 4: Create Summary
 echo "📊 Creating summary..."
 
 # Count icons
@@ -206,7 +183,7 @@ ICON_COUNT=$(find Sources/DesignAssets/Resources -name "*.imageset" | wc -l)
 CATEGORIES=$(grep -o "public enum [A-Za-z]*:" Sources/DesignAssets/GeneratedIcons.swift | wc -l)
 
 echo ""
-echo "## 🎨 Icon Fetch Summary"
+echo "## 🔍 Asset Scanning Summary"
 echo ""
 echo "| Metric | Value |"
 echo "|--------|-------|"
@@ -229,5 +206,5 @@ echo "GeneratedIcons.General.generalIcSearchDefault32.uiImage"
 echo "\`\`\`"
 
 echo ""
-echo "🎉 GitHub Actions workflow test completed successfully!"
-echo "💡 This simulates what happens automatically in GitHub Actions"
+echo "🎉 Asset scanning and code generation completed successfully!"
+echo "💡 This scans existing assets and generates type-safe Swift code"

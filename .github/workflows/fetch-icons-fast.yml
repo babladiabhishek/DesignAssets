@@ -1,0 +1,255 @@
+name: 🚀 Fast Icon Fetch
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  fetch-icons:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🎨 Fetch Icons from Figma (Fast)
+        run: |
+          echo "🚀 Starting fast icon fetch process..."
+          
+          # Set environment variables
+          export FIGMA_PERSONAL_TOKEN="${{ secrets.FIGMA_PERSONAL_TOKEN }}"
+          export FIGMA_FILE_ID="${{ secrets.FIGMA_FILE_ID }}"
+          
+          # Create resources directory
+          mkdir -p Sources/DesignAssets/Resources/Icons.xcassets
+          
+          # Create a simple Python script for fast fetching
+          cat > fetch_icons.py << 'EOF'
+          import requests
+          import json
+          import os
+          import time
+          from urllib.parse import urljoin
+          
+          def fetch_figma_file(file_id, token):
+              """Fetch Figma file metadata"""
+              url = f"https://api.figma.com/v1/files/{file_id}"
+              headers = {"X-Figma-Token": token}
+              
+              response = requests.get(url, headers=headers)
+              response.raise_for_status()
+              return response.json()
+          
+          def fetch_image_urls(file_id, node_ids, token):
+              """Fetch image URLs for multiple nodes"""
+              url = f"https://api.figma.com/v1/images/{file_id}"
+              params = {
+                  "ids": ",".join(node_ids),
+                  "format": "svg",
+                  "scale": "1"
+              }
+              headers = {"X-Figma-Token": token}
+              
+              response = requests.get(url, headers=headers, params=params)
+              response.raise_for_status()
+              return response.json()
+          
+          def download_svg(url, filepath):
+              """Download SVG file"""
+              response = requests.get(url)
+              response.raise_for_status()
+              
+              os.makedirs(os.path.dirname(filepath), exist_ok=True)
+              with open(filepath, 'w', encoding='utf-8') as f:
+                  f.write(response.text)
+          
+          def create_imageset(icon_name, svg_path):
+              """Create .imageset directory with Contents.json and SVG"""
+              imageset_dir = f"Sources/DesignAssets/Resources/Icons.xcassets/{icon_name}.imageset"
+              os.makedirs(imageset_dir, exist_ok=True)
+              
+              # Create Contents.json
+              contents = {
+                  "images": [
+                      {
+                          "filename": f"{icon_name}.svg",
+                          "idiom": "universal",
+                          "scale": "1x"
+                      }
+                  ],
+                  "info": {
+                      "author": "xcode",
+                      "version": 1
+                  }
+              }
+              
+              with open(f"{imageset_dir}/Contents.json", 'w') as f:
+                  json.dump(contents, f, indent=2)
+              
+              # Copy SVG to imageset
+              svg_filename = f"{imageset_dir}/{icon_name}.svg"
+              with open(svg_path, 'r') as src, open(svg_filename, 'w') as dst:
+                  dst.write(src.read())
+          
+          def main():
+              file_id = os.environ['FIGMA_FILE_ID']
+              token = os.environ['FIGMA_PERSONAL_TOKEN']
+              
+              print("🔍 Fetching Figma file metadata...")
+              file_data = fetch_figma_file(file_id, token)
+              
+              # Find icon components
+              components = file_data.get('components', {})
+              icon_components = []
+              
+              for node_id, component in components.items():
+                  name = component.get('name', '')
+                  if 'ic_' in name.lower() or 'icon' in name.lower():
+                      icon_components.append((node_id, name))
+              
+              print(f"📦 Found {len(icon_components)} icon components")
+              
+              # Process in batches of 10
+              batch_size = 10
+              downloaded_count = 0
+              
+              for i in range(0, len(icon_components), batch_size):
+                  batch = icon_components[i:i + batch_size]
+                  node_ids = [item[0] for item in batch]
+                  
+                  print(f"🔄 Processing batch {i//batch_size + 1}/{(len(icon_components) + batch_size - 1)//batch_size}")
+                  
+                  # Fetch image URLs
+                  image_data = fetch_image_urls(file_id, node_ids, token)
+                  images = image_data.get('images', {})
+                  
+                  # Download SVGs
+                  for node_id, name in batch:
+                      if node_id in images and images[node_id]:
+                          try:
+                              # Clean up name for file system
+                              clean_name = name.replace(' ', '_').replace('/', '_').replace('\\', '_')
+                              clean_name = ''.join(c for c in clean_name if c.isalnum() or c in '_-')
+                              
+                              # Download SVG
+                              svg_path = f"temp_{clean_name}.svg"
+                              download_svg(images[node_id], svg_path)
+                              
+                              # Create imageset
+                              create_imageset(clean_name, svg_path)
+                              
+                              # Clean up temp file
+                              os.remove(svg_path)
+                              
+                              downloaded_count += 1
+                              print(f"✅ Downloaded: {clean_name}")
+                              
+                          except Exception as e:
+                              print(f"❌ Failed to download {name}: {e}")
+                  
+                  # Rate limiting
+                  if i + batch_size < len(icon_components):
+                      time.sleep(0.5)
+              
+              print(f"🎉 Downloaded {downloaded_count} icons successfully!")
+              
+              # Generate simple Swift code
+              generate_swift_code(icon_components)
+          
+          def generate_swift_code(icon_components):
+              """Generate basic Swift code"""
+              swift_code = '''import Foundation
+          #if canImport(SwiftUI)
+          import SwiftUI
+          #endif
+          #if canImport(UIKit)
+          import UIKit
+          #endif
+          
+          public enum GeneratedIcons {
+              public static let bundle = Bundle.module
+              
+              public static var allIcons: [String] {
+                  return [
+          '''
+              
+              for _, name in icon_components:
+                  clean_name = name.replace(' ', '_').replace('/', '_').replace('\\', '_')
+                  clean_name = ''.join(c for c in clean_name if c.isalnum() or c in '_-')
+                  swift_code += f'                      "{clean_name}",\n'
+              
+              swift_code += '''                  ]
+              }
+          }
+          '''
+              
+              with open('Sources/DesignAssets/GeneratedIcons.swift', 'w') as f:
+                  f.write(swift_code)
+              
+              print("✅ Generated Swift code")
+          
+          if __name__ == "__main__":
+              main()
+          EOF
+          
+          # Install Python requests
+          pip install requests
+          
+          # Run the Python script
+          python fetch_icons.py
+          
+          echo "✅ Fast icon fetch completed!"
+      
+      - name: 📝 Create Summary
+        run: |
+          echo "📊 Creating summary..."
+          
+          # Count icons
+          ICON_COUNT=$(find Sources/DesignAssets/Resources -name "*.imageset" | wc -l)
+          
+          echo "## 🚀 Fast Icon Fetch Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Total Icons | $ICON_COUNT |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🕒 Timestamp | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Icons Downloaded:" >> $GITHUB_STEP_SUMMARY
+          find Sources/DesignAssets/Resources -name "*.imageset" | head -10 | sed 's/.*\///' | sed 's/.imageset//' | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+          if [ $ICON_COUNT -gt 10 ]; then
+            echo "- ... and $((ICON_COUNT - 10)) more" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 💾 Commit Changes
+        run: |
+          echo "💾 Committing changes..."
+          
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Add changes
+          git add Sources/DesignAssets/Resources/
+          git add Sources/DesignAssets/GeneratedIcons.swift
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "ℹ️ No changes to commit"
+          else
+            git commit -m "🚀 Fast icon fetch - $(date)
+
+            - Fetched icons directly from Figma API
+            - Created asset catalogs and Swift code
+            - Fast Python-based approach
+            
+            Icons: $(find Sources/DesignAssets/Resources -name "*.imageset" | wc -l)"
+            
+            echo "✅ Changes committed successfully!"
+          fi
+      
+      - name: 🚀 Push Changes
+        run: |
+          echo "🚀 Pushing changes..."
+          git push
+          echo "✅ Changes pushed successfully!"
