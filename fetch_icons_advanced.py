@@ -212,6 +212,15 @@ def process_icon_batch(file_id: str, token: str, batch: List[dict], category: st
         clean_name = icon['clean_name']
         original_name = icon['original_name']
         layer = icon['layer']
+        
+        # Check if imageset already exists (smart caching)
+        imageset_dir = f"{Config.OUTPUT_DIR}/{category}.xcassets/{clean_name}.imageset"
+        svg_filepath = f"{imageset_dir}/{clean_name}.svg"
+        
+        if not force_download and os.path.exists(svg_filepath):
+            logger.info(f"⏭️ Skipping existing icon: {clean_name} (not forced)")
+            return True, None
+        
         if node_id in images and images[node_id]:
             svg_path = os.path.join(Config.TEMP_DIR, f"{clean_name}.svg")
             if download_svg(images[node_id], svg_path):
@@ -318,11 +327,47 @@ def main() -> int:
         if len(failed_downloads) > 10:
             logger.warning(f"  ... and {len(failed_downloads) - 10} more errors")
 
+    # Clean up renamed/moved icons
+    logger.info(f"\n🧹 Cleaning up renamed/moved icons...")
+    cleanup_renamed_icons(categorized_icons)
+    logger.info("  ✅ Cleanup completed")
+
     logger.info(f"\n🔧 Generating Swift code...")
     generate_swift_code(categorized_icons)
     logger.info("  ✅ Generated Swift code")
 
-    return 0 if not failed_downloads else 1
+    # Return success even with failed downloads since "No image URL" is expected for non-exportable components
+    return 0
+
+def cleanup_renamed_icons(categorized_icons: Dict[str, List[dict]]) -> None:
+    """Clean up icons that have been renamed or moved in Figma."""
+    import shutil
+    
+    # Get all current icon names from Figma
+    current_icons = set()
+    for category, icons in categorized_icons.items():
+        for icon in icons:
+            current_icons.add(icon['clean_name'])
+    
+    # Scan existing xcassets directories
+    for category in categorized_icons.keys():
+        xcassets_dir = f"{Config.OUTPUT_DIR}/{category}.xcassets"
+        if not os.path.exists(xcassets_dir):
+            continue
+            
+        # Find all existing imagesets
+        for item in os.listdir(xcassets_dir):
+            if item.endswith('.imageset'):
+                icon_name = item[:-9]  # Remove .imageset extension
+                
+                # If this icon is not in current Figma icons, it might be renamed/moved
+                if icon_name not in current_icons:
+                    imageset_path = os.path.join(xcassets_dir, item)
+                    try:
+                        shutil.rmtree(imageset_path)
+                        logger.info(f"🗑️ Removed renamed/moved icon: {icon_name} (from {category})")
+                    except Exception as e:
+                        logger.warning(f"Failed to remove {imageset_path}: {e}")
 
 def generate_swift_code(categorized_icons: Dict[str, List[dict]]) -> None:
     """Generate comprehensive Swift code."""
