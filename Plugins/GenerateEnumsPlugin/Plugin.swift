@@ -22,7 +22,7 @@ struct IconInfo {
 // MARK: - Main Plugin
 
 @main
-struct GenerateIconsPlugin: CommandPlugin {
+struct GenerateEnumsPlugin: CommandPlugin {
     func performCommand(context: PluginContext, arguments: [String]) async throws {
         print("🔍 Scanning for existing icon assets...")
         
@@ -95,16 +95,24 @@ func scanForIcons(in directory: String) -> [IconInfo] {
 }
 
 func determineCategory(from iconName: String) -> String {
-    if iconName.hasPrefix("general_") {
-        return "General"
+    if iconName.hasPrefix("flag_") {
+        return "Flags"
+    } else if iconName.hasPrefix("logo_") || iconName.contains("logo") {
+        return "Logos"
     } else if iconName.hasPrefix("map_") {
         return "Map"
     } else if iconName.hasPrefix("status_") {
         return "Status"
     } else if iconName.hasPrefix("navigation_") {
         return "Navigation"
+    } else if iconName.hasPrefix("il_") {
+        return "Illustrations"
+    } else if iconName.hasPrefix("im_") {
+        return "Images"
+    } else if iconName.hasPrefix("ic_") {
+        return "Icons"
     } else {
-        return "General"
+        return "Icons" // Default category
     }
 }
 
@@ -184,6 +192,10 @@ extension GeneratedIcons {
     swiftCode += """
 
         ]
+    }
+    
+    public static var totalIconCount: Int {
+        return allIcons.count
     }
 }
 """
