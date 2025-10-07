@@ -127,57 +127,56 @@ public enum GeneratedIcons {
         case generalIcWalkThruDefault32 = "general_ic_walk_thru_default_32"
         case generalIcWalkThruFilled32 = "general_ic_walk_thru_filled_32"
         case generalIcWiFiDefault32 = "general_ic_wi_fi_default_32"
-        case generalIcWiFiFilled32 = "general_ic_wi_fi_filled_32"
-        public var image: Image {
-            Image(rawValue, bundle: bundle)
-        }
-        #if canImport(UIKit)
-        public var uiImage: UIImage? {
-            UIImage(named: rawValue, in: bundle, with: nil)
-        }
-        #endif
+        case generalIcWiFiFilled32 = "general_ic_wi_fi_filled_32"    
+    public var image: Image {
+        Image(rawValue, bundle: bundle)
     }
+    #if canImport(UIKit)
+    public var uiImage: UIImage? {
+        UIImage(named: rawValue, in: bundle, with: nil)
+    }
+    #endif
+}
 
     public enum Map: String, CaseIterable {
         case mapIcLocationNoMobileOrder32 = "map_ic_location_no_mobile_order_32"
         case mapIcMapDefault32 = "map_ic_map_default_32"
         case mapIcMapFilled32 = "map_ic_map_filled_32"
-        case mapIcOrderLocation32 = "map_ic_order_location_32"
-        public var image: Image {
-            Image(rawValue, bundle: bundle)
-        }
-        #if canImport(UIKit)
-        public var uiImage: UIImage? {
-            UIImage(named: rawValue, in: bundle, with: nil)
-        }
-        #endif
+        case mapIcOrderLocation32 = "map_ic_order_location_32"    
+    public var image: Image {
+        Image(rawValue, bundle: bundle)
     }
+    #if canImport(UIKit)
+    public var uiImage: UIImage? {
+        UIImage(named: rawValue, in: bundle, with: nil)
+    }
+    #endif
+}
 
     public enum Navigation: String, CaseIterable {
         case navigationIcNavListDefault32 = "navigation_ic_nav_list_default_32"
-        case navigation🛑IcNavListFilled32 = "navigation_🛑__ic_nav_list_filled_32"
-        public var image: Image {
-            Image(rawValue, bundle: bundle)
-        }
-        #if canImport(UIKit)
-        public var uiImage: UIImage? {
-            UIImage(named: rawValue, in: bundle, with: nil)
-        }
-        #endif
+        case navigation🛑IcNavListFilled32 = "navigation_🛑__ic_nav_list_filled_32"    
+    public var image: Image {
+        Image(rawValue, bundle: bundle)
     }
+    #if canImport(UIKit)
+    public var uiImage: UIImage? {
+        UIImage(named: rawValue, in: bundle, with: nil)
+    }
+    #endif
+}
 
     public enum Status: String, CaseIterable {
         case statusIcAlertDefault32 = "status_ic_alert_default_32"
-        case statusIcAlertFilled32 = "status_ic_alert_filled_32"
-        public var image: Image {
-            Image(rawValue, bundle: bundle)
-        }
-        #if canImport(UIKit)
-        public var uiImage: UIImage? {
-            UIImage(named: rawValue, in: bundle, with: nil)
-        }
-        #endif
+        case statusIcAlertFilled32 = "status_ic_alert_filled_32"    
+    public var image: Image {
+        Image(rawValue, bundle: bundle)
     }
+    #if canImport(UIKit)
+    public var uiImage: UIImage? {
+        UIImage(named: rawValue, in: bundle, with: nil)
+    }
+    #endif
 }
 
 // MARK: - Helper Extensions
@@ -313,7 +312,7 @@ extension GeneratedIcons {
             "status_ic_alert_filled_32",
         ]
     }
-
+    
     public static var categories: [String] {
         return [
             "General",
