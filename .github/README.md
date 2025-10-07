@@ -1,250 +1,102 @@
-# 🤖 GitHub Actions for Icon Management
+# GitHub Actions Workflows
 
-This directory contains a GitHub Actions workflow that automatically fetches icons from Figma and generates type-safe Swift code for iOS development.
+This directory contains automated workflows for managing design assets from Figma.
 
-## 🎯 Overview
+## 🚀 Available Workflows
 
-The workflow provides:
-- **Automated icon fetching** from Figma on schedule or manual trigger
-- **iOS Swift code generation** with type-safe enums
-- **Asset catalog management** with proper Xcode integration
-- **Cross-platform compatibility** - same assets can be used by any platform
-
-## 📋 Workflow
-
-### 🍎 iOS Icon Fetch (`fetch-icons.yml`)
+### 1. Production Icon Sync (`production.yml`)
 
 **Triggers:**
-- Manual dispatch (workflow_dispatch)
-- Weekly schedule (every Monday at 9 AM UTC)
-- Config file changes (icon-fetcher-config.json)
-- Pull requests affecting config
+- Manual trigger via GitHub Actions UI
+- Every Monday at 9 AM UTC (scheduled)
+- When the Python script or workflow files are updated
 
 **What it does:**
-1. Fetches latest icons from Figma using the command plugin
-2. Generates `GeneratedIcons.swift` with type-safe enums
-3. Runs tests to ensure everything works
-4. Commits and pushes changes automatically
+- Fetches all icons from your production Figma file
+- Uses advanced categorization algorithm
+- Generates Swift code automatically
+- Commits changes back to the repository
+- Provides detailed summary of results
 
-**Output:**
-- Updated `Sources/DesignAssets/GeneratedIcons.swift`
-- Updated asset catalogs in `Sources/DesignAssets/Resources/`
-- Build and test verification
+### 2. Manual Icon Fetch (`manual.yml`)
 
-## 🔧 Setup
+**Triggers:**
+- Manual trigger only
+- Includes option to force refresh all icons
 
-### Required Secrets
+**What it does:**
+- Same as production workflow but manual control
+- Option to force re-download all icons (ignores cache)
+- Shows results without auto-committing
 
-Add these secrets to your GitHub repository:
+## 🔧 Setup Required
 
-1. **`FIGMA_PERSONAL_TOKEN`**
-   - Go to [Figma Settings](https://www.figma.com/settings)
-   - Navigate to **Account** → **Personal Access Tokens**
-   - Create a new token with file access permissions
-   - Add it as a repository secret
+### Repository Secrets
 
-2. **`FIGMA_FILE_ID`**
-   - Extract from your Figma file URL
-   - Example: `https://www.figma.com/design/T0ahWzB1fWx5BojSMkfiAE/Icons`
-   - File ID: `T0ahWzB1fWx5BojSMkfiAE`
-   - Add it as a repository secret
+Add these secrets to your GitHub repository settings:
 
-### Configuration
+1. **`FIGMA_FILE_ID`**: Your Figma file ID (e.g., `Ek2nrkmlV9KouRmmXE7j0C`)
+2. **`FIGMA_PERSONAL_TOKEN`**: Your Figma personal access token
 
-The workflow uses the existing `icon-fetcher-config.json` file for additional configuration:
+### How to Add Secrets:
 
-```json
-{
-  "figma": {
-    "fileId": "your_file_id_here",
-    "personalToken": "your_token_here"
-  },
-  "output": {
-    "basePath": "Sources/DesignAssets/Resources",
-    "autoDetectLayers": true,
-    "createAssetCatalogs": true
-  },
-  "filtering": {
-    "iconPrefixes": ["ic_", "map_", "status_", "navigation_"],
-    "iconKeywords": ["icon", "ui", "button", "action"],
-    "excludeSizeIndicators": ["_12", "_16", "_20", "_24", "_32"]
-  }
-}
-```
+1. Go to your repository on GitHub
+2. Click **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Add both secrets with the exact names above
 
-## 🚀 Usage
+## 📋 Usage
 
-### Manual Trigger
+### Manual Trigger (Recommended for testing):
 
-1. Go to **Actions** tab in your GitHub repository
-2. Select **🎨 Fetch Icons from Figma**
+1. Go to **Actions** tab in your repository
+2. Select **Manual Icon Fetch** or **Fetch Icons from Production Figma**
 3. Click **Run workflow**
-4. Choose the branch and click **Run workflow**
+4. For manual workflow, you can choose to force refresh all icons
 
-### Automatic Triggers
+### Automatic Updates:
 
-- **Weekly Schedule**: Icons are fetched every Monday at 9 AM UTC
-- **Config Changes**: Icons are fetched when `icon-fetcher-config.json` is modified
-- **Pull Requests**: Icons are fetched when PRs affect the config
+The production workflow will automatically:
+- Run every Monday at 9 AM UTC
+- Check for new icons in your Figma file
+- Update your repository with any changes
+- Generate commit messages with detailed statistics
 
-### Integration
+## 📊 What Gets Updated
 
-#### iOS Integration
+When the workflow runs, it updates:
 
-The generated `GeneratedIcons.swift` provides type-safe access:
+- **Asset Catalogs**: All `.xcassets` folders in `Sources/DesignAssets/Resources/`
+- **Swift Code**: `Sources/DesignAssets/GeneratedIcons.swift`
+- **Categories**: Flags, Icons, Images, Logos, Map, Illustrations
 
-```swift
-import DesignAssets
+## 🔍 Monitoring
 
-// Use icons in SwiftUI
-GeneratedIcons.General.generalIcSearchDefault32.image
+Check the **Actions** tab to see:
+- Workflow execution history
+- Detailed logs of the fetch process
+- Summary of icons downloaded
+- Any errors or issues
 
-// Use icons in UIKit
-let imageView = UIImageView()
-imageView.image = GeneratedIcons.General.generalIcSearchDefault32.uiImage
+## 🛠️ Troubleshooting
 
-// Get all icons
-let allIcons = DesignAssets.availableIconNames
-let categories = DesignAssets.iconCategories
-```
+### Common Issues:
 
-#### Cross-Platform Usage
+1. **Missing Secrets**: Ensure both `FIGMA_FILE_ID` and `FIGMA_PERSONAL_TOKEN` are set
+2. **Permission Errors**: Make sure your Figma token has access to the file
+3. **No Changes**: If no icons are updated, your Figma file might not have changed
 
-The same SVG assets can be consumed by any platform:
+### Force Refresh:
 
-- **React Native**: Use the SVG files directly
-- **Flutter**: Convert SVGs to Flutter-compatible format
-- **Web**: Use SVGs directly in HTML/CSS
-- **Android**: Convert to Android drawable format
-
-## 📊 Monitoring
-
-### Workflow Status
-
-- Check the **Actions** tab for workflow status
-- Green checkmark ✅ = Success
-- Red X ❌ = Failure (check logs for details)
-
-### Summary Reports
-
-Each workflow run generates a summary with:
-- Total number of icons fetched
-- Number of categories found
-- Timestamp of the run
-- List of categories discovered
-- Usage examples
-
-### Notifications
-
-Configure notifications in your repository settings to get notified of:
-- Workflow failures
-- Successful icon updates
-- Schedule changes
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-1. **"Invalid token" error**
-   - Verify `FIGMA_PERSONAL_TOKEN` secret is correct
-   - Ensure token has file access permissions
-   - Check token hasn't expired
-
-2. **"No icons found"**
-   - Verify `FIGMA_FILE_ID` secret is correct
-   - Check that the Figma file contains icon components
-   - Ensure token has access to the file
-
-3. **Build failures**
-   - Check that the generated Swift code compiles
-   - Verify all dependencies are available
-   - Review the workflow logs for specific errors
-
-4. **Permission errors**
-   - Ensure the workflow has write permissions
-   - Check that the repository allows Actions to modify files
-   - Verify the `GITHUB_TOKEN` has sufficient permissions
-
-### Debug Mode
-
-To enable debug logging, add this to your workflow:
-
-```yaml
-- name: 🎨 Fetch Icons from Figma
-  run: |
-    export DEBUG=true
-    # ... rest of the command
-```
-
-### Manual Testing
-
-You can test the workflow locally:
-
-```bash
-# Test the fetch command
-swift package plugin --allow-writing-to-package-directory --allow-network-connections all fetch-icons --token YOUR_TOKEN --file-id YOUR_FILE_ID
-
-# Test the generation script
-swift generate_icons.swift
-```
-
-## 🔄 Customization
-
-### Schedule Changes
-
-Modify the cron schedule in the workflow file:
-
-```yaml
-schedule:
-  - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
-  - cron: '0 0 * * *'  # Daily at midnight UTC
-  - cron: '0 0 1 * *'  # Monthly on the 1st
-```
-
-### Filtering Options
-
-Update `icon-fetcher-config.json` to customize which icons are fetched:
-
-```json
-{
-  "filtering": {
-    "iconPrefixes": ["ic_", "map_", "status_"],
-    "iconKeywords": ["icon", "ui", "button"],
-    "excludeSizeIndicators": ["_12", "_16", "_20"]
-  }
-}
-```
-
-### Output Customization
-
-Modify the generated Swift code structure by editing the generation script in the workflow.
+Use the manual workflow with "Force refresh" enabled to re-download all icons, useful when:
+- Testing the workflow
+- Figma file structure changed
+- You want to ensure all icons are up to date
 
 ## 📈 Benefits
 
-### For iOS Teams
-- **Type Safety**: Compile-time checking of icon names
-- **Auto-completion**: IDE support for all available icons
-- **Consistency**: Standardized naming and organization
-- **Automation**: No manual icon management needed
-
-### For Cross-Platform Teams
-- **Single Source**: One Figma file for all platforms
-- **Consistency**: Same icons across all platforms
-- **Version Control**: Track icon changes in Git history
-- **Easy Integration**: Simple to consume by any platform
-
-### For Design Teams
-- **Single Source**: One Figma file for all platforms
-- **Automation**: No manual export process needed
-- **Consistency**: Same icons across all platforms
-- **Version Control**: Track icon changes in Git history
-
-## 🎉 Success!
-
-With this workflow set up, your design system becomes truly cross-platform and automated. The iOS team gets type-safe, auto-completed icons, while other platforms can consume the same SVG assets. Designers can focus on creating great designs without worrying about the technical implementation details.
-
-## 🔗 Related
-
-- [Main README](../README.md) - Complete package documentation
-- [Package.swift](../Package.swift) - Swift Package Manager configuration
-- [icon-fetcher-config.json](../icon-fetcher-config.json) - Configuration file
+- **Automated**: No manual intervention needed
+- **Consistent**: Same process every time
+- **Trackable**: Full history in GitHub Actions
+- **Efficient**: Only downloads changed icons (unless forced)
+- **Integrated**: Works seamlessly with your development workflow

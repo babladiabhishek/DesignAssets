@@ -20,10 +20,10 @@ let package = Package(
       dependencies: ["DesignAssets"]
     ),
     .plugin(
-        name: "FetchIconsPlugin",
+        name: "GenerateIconsPlugin",
         capability: .command(
             intent: .custom(
-                verb: "scan-icons",
+                verb: "generate-icons",
                 description: "Scan existing icon assets and generate type-safe Swift code"
             ),
             permissions: [
