@@ -26,7 +26,7 @@ jobs:
       - name: 🏗️ Setup Swift
         uses: swift-actions/setup-swift@v1
         with:
-          swift-version: "5.9"
+          swift-version: "5.9"  # Using Swift 5.9 for compatibility with swift-actions
       
       - name: 🔍 Check for Figma changes
         id: check-changes
