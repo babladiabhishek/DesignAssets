@@ -100,9 +100,9 @@ jobs:
         echo "💾 Updated last fetch timestamp: $CURRENT_MODIFIED"
         
     - name: Set up Swift
-      uses: swift-actions/setup-swift@v1.3.0
+      uses: swift-actions/setup-swift@v2
       with:
-        swift-version: 5.8
+        swift-version: "5.8"
 
     - name: Generate Swift code from assets
       run: |
