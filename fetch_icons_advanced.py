@@ -231,6 +231,8 @@ def create_xcassets_contents(category: str) -> bool:
     """Create Contents.json for the xcassets folder."""
     xcassets_dir = f"{Config.OUTPUT_DIR}/{category}.xcassets"
     try:
+        # Ensure the directory exists before writing the file
+        os.makedirs(xcassets_dir, exist_ok=True)
         contents = {"info": {"author": "xcode", "version": 1}}
         with open(f"{xcassets_dir}/Contents.json", 'w') as f:
             json.dump(contents, f, indent=2)

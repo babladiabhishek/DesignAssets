@@ -18,6 +18,9 @@ xcuserdata/
 .build/
 DerivedData/
 
+# Large files are now handled by Git LFS
+# See .gitattributes for tracked patterns
+
 # Sensitive configuration files
 icon-fetcher-config.json
 
