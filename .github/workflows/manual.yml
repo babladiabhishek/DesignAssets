@@ -47,7 +47,7 @@ jobs:
     - name: Generate Swift code
       run: |
         echo "🔧 Generating Swift code..."
-        swift package plugin generate-icons
+        swift package plugin generate-enums
         
     - name: Show results
       run: |

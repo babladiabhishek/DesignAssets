@@ -44,7 +44,7 @@ jobs:
     - name: Generate Swift code from assets
       run: |
         echo "🔧 Generating Swift code from downloaded assets..."
-        swift package plugin generate-icons
+        swift package plugin generate-enums
         
     - name: Check for changes
       id: changes
