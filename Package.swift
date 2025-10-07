@@ -20,14 +20,14 @@ let package = Package(
       dependencies: ["DesignAssets"]
     ),
     .plugin(
-        name: "GenerateIconsPlugin",
+        name: "GenerateEnumsPlugin",
         capability: .command(
             intent: .custom(
-                verb: "generate-icons",
-                description: "Scan existing icon assets and generate type-safe Swift code"
+                verb: "generate-enums",
+                description: "Scan existing icon assets and generate type-safe Swift enums"
             ),
             permissions: [
-                .writeToPackageDirectory(reason: "Generate Swift code from existing icon assets")
+                .writeToPackageDirectory(reason: "Generate Swift enums from existing icon assets")
             ]
         )
     ),
