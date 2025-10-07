@@ -204,7 +204,17 @@ extension GeneratedIcons {
 }
 
 func camelCase(_ string: String) -> String {
-    let components = string.components(separatedBy: "_")
+    // Replace hyphens and other special characters with underscores
+    let cleaned = string.replacingOccurrences(of: "-", with: "_")
+                       .replacingOccurrences(of: " ", with: "_")
+                       .replacingOccurrences(of: ".", with: "_")
+    
+    let components = cleaned.components(separatedBy: "_")
     guard let first = components.first else { return string }
-    return first + components.dropFirst().map { $0.capitalized }.joined()
+    
+    // Ensure the first component is lowercase and valid Swift identifier
+    let firstComponent = first.lowercased()
+    let validFirst = firstComponent.isEmpty ? "icon" : firstComponent
+    
+    return validFirst + components.dropFirst().map { $0.capitalized }.joined()
 }

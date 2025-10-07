@@ -102,12 +102,17 @@ jobs:
     - name: Set up Swift
       uses: swift-actions/setup-swift@main
       with:
-        swift-version: 6.2
-        
-    - name: Generate Swift code
+        swift-version: 5.10
+
+    - name: Generate Swift code from assets
       run: |
-        echo "🔧 Generating Swift code..."
-        swift package plugin generate-enums
+        echo "🔧 Generating Swift code from downloaded assets..."
+        swift package plugin --allow-writing-to-package-directory generate-enums
+
+    - name: Build package
+      run: |
+        echo "🔨 Building package..."
+        swift build
         
     - name: Show results
       run: |
