@@ -24,7 +24,8 @@ let package = Package(
     ),
     .plugin(
         name: "GenerateEnumsPlugin",
-        capability: .buildTool()
+        capability: .buildTool(),
+        dependencies: []
     ),
   ]
 )
