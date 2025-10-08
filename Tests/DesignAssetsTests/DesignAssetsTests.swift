@@ -3,71 +3,31 @@ import XCTest
 
 final class DesignAssetsTests: XCTestCase {
     
+    func testGeneratedIconsStructure() throws {
+        // Test that GeneratedIcons has the expected structure
+        let allIcons = GeneratedIcons.allIcons
+        let categories = GeneratedIcons.categories
+        let totalCount = GeneratedIcons.totalIconCount
+        
+        XCTAssertNotNil(allIcons, "Should have allIcons array")
+        XCTAssertNotNil(categories, "Should have categories array")
+        XCTAssertEqual(allIcons.count, totalCount, "Total count should match allIcons count")
+    }
+    
+    func testBundleAccess() throws {
+        // Test that the bundle is accessible
+        let bundle = GeneratedIcons.bundle
+        XCTAssertNotNil(bundle, "Should have a valid bundle")
+    }
+    
     func testIconCategories() throws {
         // Test that we have the expected categories
-        let categories = DesignAssets.iconCategories
-        XCTAssertTrue(categories.contains("General"))
+        let categories = GeneratedIcons.categories
+        XCTAssertTrue(categories.contains("Flags"))
+        XCTAssertTrue(categories.contains("Icons"))
+        XCTAssertTrue(categories.contains("Images"))
+        XCTAssertTrue(categories.contains("Logos"))
         XCTAssertTrue(categories.contains("Map"))
-        XCTAssertTrue(categories.contains("Status"))
-        XCTAssertTrue(categories.contains("Navigation"))
-        XCTAssertEqual(categories.count, 4)
-    }
-    
-    func testIconLayers() throws {
-        // Test that we have the expected layers
-        let layers = DesignAssets.iconLayers
-        XCTAssertTrue(layers.contains("GeneralIcons"))
-        XCTAssertTrue(layers.contains("MapIcons"))
-        XCTAssertTrue(layers.contains("StatusIcons"))
-        XCTAssertTrue(layers.contains("FeelgoodIcons"))
-        XCTAssertEqual(layers.count, 4)
-    }
-    
-    func testAvailableIconNames() throws {
-        // Test that we can get available icon names (initially empty until plugin runs)
-        let iconNames = DesignAssets.availableIconNames
-        // Initially empty until the build plugin populates it
-        XCTAssertNotNil(iconNames, "Should have available icon names array")
-    }
-    
-    func testIconRefreshLogic() throws {
-        // Test the icon refresh logic
-        let needsRefresh = DesignAssets.needsIconRefresh
-        // The refresh logic depends on file existence and timing
-        // Just test that the method doesn't crash
-        XCTAssertNotNil(needsRefresh, "Refresh check should not crash")
-        
-        // Mark as refreshed
-        DesignAssets.markIconsRefreshed()
-        
-        // Test that marking as refreshed doesn't crash
-        XCTAssertTrue(true, "Mark as refreshed should not crash")
-    }
-    
-    func testFigmaIconInfoCreation() throws {
-        // Test that FigmaIconInfo can be created properly
-        let iconInfo = FigmaIconInfo(
-            id: "test_id",
-            name: "test_icon",
-            category: "General",
-            variant: "filled",
-            nodeId: "1:1",
-            filePath: "/test/path",
-            size: CGSize(width: 24, height: 24),
-            isComponent: true,
-            thumbnailUrl: "https://example.com/thumb.png",
-            description: "Test icon"
-        )
-        
-        XCTAssertEqual(iconInfo.id, "test_id")
-        XCTAssertEqual(iconInfo.name, "test_icon")
-        XCTAssertEqual(iconInfo.category, "General")
-        XCTAssertEqual(iconInfo.variant, "filled")
-        XCTAssertEqual(iconInfo.nodeId, "1:1")
-        XCTAssertEqual(iconInfo.filePath, "/test/path")
-        XCTAssertEqual(iconInfo.size, CGSize(width: 24, height: 24))
-        XCTAssertTrue(iconInfo.isComponent)
-        XCTAssertEqual(iconInfo.thumbnailUrl, "https://example.com/thumb.png")
-        XCTAssertEqual(iconInfo.description, "Test icon")
+        XCTAssertTrue(categories.contains("Illustrations"))
     }
 }

@@ -1,8 +1,5 @@
 import Foundation
 import PackagePlugin
-#if canImport(XcodeProjectPlugin)
-import XcodeProjectPlugin
-#endif
 
 // MARK: - Data Models for Plugin
 
@@ -10,42 +7,85 @@ struct IconInfo {
     let id: String
     let name: String
     let category: String
-    let variant: String
-    let nodeId: String
     let filePath: String
     let size: CGSize
-    let isComponent: Bool
-    let thumbnailUrl: String?
-    let description: String?
 }
 
 // MARK: - Main Plugin
 
 @main
-struct GenerateEnumsPlugin: CommandPlugin {
-    func performCommand(context: PluginContext, arguments: [String]) async throws {
-        print("🔍 Scanning for existing icon assets...")
-        
-        let resourcesDir = context.package.directory.appending(subpath: "Sources/DesignAssets/Resources")
-        
-        // Scan for existing icons
-        let allIcons = scanForIcons(in: resourcesDir.string)
-        
-        if allIcons.isEmpty {
-            print("⚠️ No icon assets found. Please add icons to Sources/DesignAssets/Resources/")
-            return
+struct GenerateEnumsPlugin: BuildToolPlugin {
+    func createBuildCommands(context: PluginContext, target: Target) throws -> [Command] {
+        let logName = "GenerateEnumsPlugin(BuildToolPlugin)"
+
+        guard let target = target as? SourceModuleTarget else {
+            Diagnostics.error("\(logName): unable to cast target as SourceModuleTarget")
+            return []
         }
+
+        let resourcesDir = target.directory.appending(subpath: "Resources")
+        let allIcons = scanForIcons(in: resourcesDir.string)
+
+        guard !allIcons.isEmpty else {
+            Diagnostics.error("\(logName): No icon assets found in \(resourcesDir.string)")
+            return []
+        }
+
+        let output = context.pluginWorkDirectory.appending("GeneratedIcons.swift")
         
-        print("📦 Found \(allIcons.count) icons")
+        // Generate the Swift code content
+        let swiftCode = generateSwiftCodeContent(icons: allIcons)
         
-        // Generate Swift code
-        let swiftFile = context.package.directory.appending(subpath: "Sources/DesignAssets/GeneratedIcons.swift")
-        try generateSwiftCode(icons: allIcons, outputPath: swiftFile)
-        
-        print("✅ Generated Swift code at \(swiftFile.string)")
-        print("🎉 Generated code for \(allIcons.count) icons successfully!")
+        // Write the generated code to the output file
+        try swiftCode.write(to: URL(fileURLWithPath: output.string), atomically: true, encoding: .utf8)
+
+        return [
+            .buildCommand(
+                displayName: "Generate Icon Enums",
+                executable: .init("/usr/bin/true"), // No external tool needed
+                arguments: [],
+                inputFiles: [],
+                outputFiles: [output]
+            )
+        ]
     }
 }
+
+#if canImport(XcodeProjectPlugin)
+import XcodeProjectPlugin
+
+extension GenerateEnumsPlugin: XcodeBuildToolPlugin {
+    func createBuildCommands(context: XcodePluginContext, target: XcodeTarget) throws -> [Command] {
+        let logName = "GenerateEnumsPlugin(XcodeBuildToolPlugin)"
+
+        let resourcesDir = target.directory.appending(subpath: "Resources")
+        let allIcons = scanForIcons(in: resourcesDir.string)
+
+        guard !allIcons.isEmpty else {
+            Diagnostics.error("\(logName): No icon assets found in \(resourcesDir.string)")
+            return []
+        }
+
+        let output = context.pluginWorkDirectory.appending("GeneratedIcons.swift")
+        
+        // Generate the Swift code content
+        let swiftCode = generateSwiftCodeContent(icons: allIcons)
+        
+        // Write the generated code to the output file
+        try swiftCode.write(to: URL(fileURLWithPath: output.string), atomically: true, encoding: .utf8)
+
+        return [
+            .buildCommand(
+                displayName: "Generate Icon Enums",
+                executable: .init("/usr/bin/true"), // No external tool needed
+                arguments: [],
+                inputFiles: [],
+                outputFiles: [output]
+            )
+        ]
+    }
+}
+#endif
 
 // MARK: - Helper Functions
 
@@ -76,13 +116,8 @@ func scanForIcons(in directory: String) -> [IconInfo] {
                         id: iconName,
                         name: iconName,
                         category: category,
-                        variant: "default",
-                        nodeId: iconName,
                         filePath: imagesetURL.path,
-                        size: CGSize(width: 32, height: 32),
-                        isComponent: true,
-                        thumbnailUrl: nil,
-                        description: "Generated from existing assets"
+                        size: CGSize(width: 32, height: 32)
                     )
                     
                     allIcons.append(iconInfo)
@@ -116,10 +151,9 @@ func determineCategory(from iconName: String) -> String {
     }
 }
 
-func generateSwiftCode(icons: [IconInfo], outputPath: Path) throws {
-    let swiftFile = URL(fileURLWithPath: outputPath.string)
-    
+func generateSwiftCodeContent(icons: [IconInfo]) -> String {
     var swiftCode = """
+// Generated by GenerateEnumsPlugin
 import Foundation
 #if canImport(SwiftUI)
 import SwiftUI
@@ -202,7 +236,7 @@ extension GeneratedIcons {
 }
 """
     
-    try swiftCode.write(to: swiftFile, atomically: true, encoding: .utf8)
+    return swiftCode
 }
 
 func camelCase(_ string: String) -> String {

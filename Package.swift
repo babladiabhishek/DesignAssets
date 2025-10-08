@@ -13,6 +13,9 @@ let package = Package(
           dependencies: [],
           resources: [
             .process("Resources")
+          ],
+          plugins: [
+            .plugin(name: "GenerateEnumsPlugin")
           ]
         ),
     .testTarget(
@@ -21,15 +24,7 @@ let package = Package(
     ),
     .plugin(
         name: "GenerateEnumsPlugin",
-        capability: .command(
-            intent: .custom(
-                verb: "generate-enums",
-                description: "Scan existing icon assets and generate type-safe Swift enums"
-            ),
-            permissions: [
-                .writeToPackageDirectory(reason: "Generate Swift enums from existing icon assets")
-            ]
-        )
+        capability: .buildTool()
     ),
   ]
 )
