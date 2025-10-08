@@ -1,18 +1,18 @@
 # 🎨 DesignAssets
 
-A clean, lightweight Swift Package Manager package for consuming design assets from Figma with automatic code generation and type-safe access.
+A clean, lightweight Swift Package Manager package for consuming design assets from Figma with automatic build-time code generation and type-safe access.
 
 ## ✨ Features
 
 - **📦 Clean SPM Package**: Lightweight package focused on iOS asset consumption
-- **🔌 GenerateEnumsPlugin**: Command plugin for generating Swift code from existing assets
+- **🔌 BuildToolPlugin**: Automatic Swift code generation at build time
 - **📂 Smart Organization**: Groups icons by categories (Flags, Icons, Images, Logos, Map, Illustrations)
-- **⚡ Swift Code Generation**: Generates organized Swift enums for type-safe icon access
+- **⚡ Build-Time Generation**: Generates Swift enums automatically during compilation
 - **📱 SwiftUI & UIKit**: Works with both SwiftUI and UIKit
-- **🤖 Automated Workflow**: Icons are fetched and updated via external GitHub Actions workflow
+- **🤖 External Workflow**: Icons are fetched and updated via FigmaIconsWorkflow repository
 - **🌐 Cross-Platform Ready**: Same assets can be consumed by any platform
-- **🔄 Smart Caching**: Only updates when Figma file changes
-- **⚡ Ultra-Fast**: Optimized for speed with intelligent caching
+- **🔄 Zero Configuration**: Just add the package and build
+- **⚡ Type-Safe Access**: Compile-time checking for all icons
 
 ## 🏗️ Architecture & Flow
 
@@ -29,11 +29,11 @@ graph TD
     I --> J[Create Pull Request]
     J --> K[DesignAssets Repository]
     
-    K --> L[GenerateEnumsPlugin]
+    K --> L[BuildToolPlugin]
     L --> M[Scan Existing Assets]
     M --> N[Parse Icon Names]
     N --> O[Determine Categories]
-    O --> P[Generate Swift Code]
+    O --> P[Generate Swift Code at Build Time]
     P --> Q[Create GeneratedIcons.swift]
     Q --> R[Type-Safe Access Ready]
     
@@ -76,29 +76,24 @@ dependencies: [
 
 ## 🚀 Quick Start
 
-### **Automated Workflow (Recommended)**
+### **Zero Configuration Setup**
 
-Icons are automatically fetched and updated via the [FigmaIconsWorkflow](https://github.com/babladiabhishek/FigmaIconsWorkflow) repository:
+Icons are automatically generated at build time - no manual steps required!
 
 1. **Add this package** to your Xcode project or Package.swift
-2. **Icons are automatically updated** via GitHub Actions workflow
-3. **Pull requests are created** when new icons are available
-4. **Merge the PR** to get the latest icons in your app
-5. **Use the generated icons** with type-safe access!
+2. **Build your project** - icons are automatically generated
+3. **Use the generated icons** with type-safe access!
 
-### **Manual Code Generation**
+### **External Workflow Integration**
 
-If you have existing icon assets, you can generate Swift code manually:
+Icons are fetched and updated via the [FigmaIconsWorkflow](https://github.com/babladiabhishek/FigmaIconsWorkflow) repository:
 
-```bash
-# Generate Swift code from existing assets
-swift package plugin generate-enums
+1. **Icons are automatically updated** via GitHub Actions workflow
+2. **Pull requests are created** when new icons are available
+3. **Merge the PR** to get the latest icons in your app
+4. **Build your project** - new icons are automatically available!
 
-# Build your project
-swift build
-```
-
-The GenerateEnumsPlugin will scan your existing assets and generate type-safe Swift code!
+The BuildToolPlugin automatically generates type-safe Swift code at build time!
 
 ## 🎨 Usage
 
@@ -267,15 +262,12 @@ Icons are managed by the [FigmaIconsWorkflow](https://github.com/babladiabhishek
 6. **📝 Creates Pull Request** to this DesignAssets repository
 7. **✅ Merge PR** to get the latest icons in your app
 
-### **Manual Code Generation**
+### **Build-Time Generation**
 
-If you have existing icon assets, generate Swift code:
+Icons are automatically generated at build time - no manual steps required!
 
 ```bash
-# Generate Swift code from existing assets
-swift package plugin generate-enums
-
-# Build your project
+# Just build your project - icons are generated automatically
 swift build
 ```
 
@@ -384,15 +376,7 @@ let package = Package(
         ),
         .plugin(
             name: "GenerateEnumsPlugin",
-            capability: .command(
-                intent: .custom(
-                    verb: "generate-enums",
-                    description: "Scan existing icon assets and generate type-safe Swift enums"
-                ),
-                permissions: [
-                    .writeToPackageDirectory(reason: "Generate Swift enums from existing icon assets")
-                ]
-            )
+            capability: .buildTool()
         )
     ]
 )
@@ -511,9 +495,7 @@ python3 fetch_icons_advanced.py
    - Add `FIGMA_PERSONAL_TOKEN`, `FIGMA_FILE_ID`, and `PAT_TOKEN` secrets
    - The workflow will run automatically every Monday with smart caching
 3. **Merge pull requests** when new icons are available
-4. **Generate Swift code** manually if needed:
-   - Run `swift package plugin generate-enums` to generate Swift code
-   - Build your project to use the generated code
+4. **Build your project** - icons are automatically generated at build time
 5. **Use icons** in your SwiftUI/UIKit views with type safety!
 6. **Share with other platforms** - the same SVG assets can be consumed by any platform
 
@@ -521,8 +503,8 @@ python3 fetch_icons_advanced.py
 
 Check out the test files for complete usage examples:
 - **DesignAssetsTests.swift** - Comprehensive test suite
-- **GeneratedIcons.swift** - Generated type-safe code structure
-- **Plugins/GenerateEnumsPlugin/Plugin.swift** - Command plugin implementation
+- **GeneratedIcons.swift** - Generated type-safe code structure (auto-generated at build time)
+- **Plugins/GenerateEnumsPlugin/Plugin.swift** - BuildToolPlugin implementation
 
 ## 📄 License
 
