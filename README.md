@@ -38,9 +38,15 @@ graph TD
     Q --> R[Type-Safe Access Ready]
     
     R --> S[SwiftUI/UIKit Usage]
-    S --> T[GeneratedIcons.allIcons]
-    S --> U[GeneratedIcons.categories]
-    S --> V[GeneratedIcons.totalIconCount]
+    S --> T[GeneratedIcons.Flags.AC.image]
+    S --> U[GeneratedIcons.Icons.search.image]
+    S --> V[GeneratedIcons.allIcons]
+    S --> W[GeneratedIcons.categories]
+    S --> X[GeneratedIcons.totalIconCount]
+    
+    Y[Developer] --> Z[Add Package to Project]
+    Z --> AA[Build Project]
+    AA --> L
     
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -49,6 +55,9 @@ graph TD
     style L fill:#f3e5f5
     style R fill:#e8f5e8
     style S fill:#fff3e0
+    style Y fill:#ffebee
+    style Z fill:#ffebee
+    style AA fill:#ffebee
 ```
 
 ## 📦 Installation
