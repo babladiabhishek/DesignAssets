@@ -37,7 +37,7 @@ struct GenerateEnumsPlugin: BuildToolPlugin {
         let swiftCode = generateSwiftCodeContent(icons: allIcons)
         
         // Write the generated code to the output file
-        try swiftCode.write(to: URL(fileURLWithPath: output.string), atomically: true, encoding: .utf8)
+        try swiftCode.write(to: URL(fileURLWithPath: output.string), atomically: true, encoding: String.Encoding.utf8)
 
         return [
             .buildCommand(
@@ -58,7 +58,7 @@ extension GenerateEnumsPlugin: XcodeBuildToolPlugin {
     func createBuildCommands(context: XcodePluginContext, target: XcodeTarget) throws -> [Command] {
         let logName = "GenerateEnumsPlugin(XcodeBuildToolPlugin)"
 
-        let resourcesDir = target.directory.appending(subpath: "Resources")
+        let resourcesDir = context.xcodeProject.directory.appending(subpath: "Sources/DesignAssets/Resources")
         let allIcons = scanForIcons(in: resourcesDir.string)
 
         guard !allIcons.isEmpty else {
@@ -72,7 +72,7 @@ extension GenerateEnumsPlugin: XcodeBuildToolPlugin {
         let swiftCode = generateSwiftCodeContent(icons: allIcons)
         
         // Write the generated code to the output file
-        try swiftCode.write(to: URL(fileURLWithPath: output.string), atomically: true, encoding: .utf8)
+        try swiftCode.write(to: URL(fileURLWithPath: output.string), atomically: true, encoding: String.Encoding.utf8)
 
         return [
             .buildCommand(
