@@ -14,57 +14,74 @@ jobs:
     runs-on: ubuntu-22.04
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          lfs: true
       
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests fuzzywuzzy python-levenshtein
-        
-    - name: Check for existing assets
-      id: check-assets
-      run: |
-        if [ -d "Sources/DesignAssets/Resources/" ] && find "Sources/DesignAssets/Resources/" -name "*.svg" | grep -q .; then
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests fuzzywuzzy
+
+      - name: Install Git LFS
+        run: |
+          sudo apt-get update
+          sudo apt-get install git-lfs
+          git lfs install
+
+      - name: Check for Large Non-LFS Files
+        run: |
+          echo "🔍 Checking for large files that should be tracked with Git LFS..."
+          if find Sources/DesignAssets/Resources -type f -not -path "*.git/*" -size +100M | grep -v ".svg"; then
+            echo "❌ Error: Non-SVG files larger than 100MB detected. Remove or track with Git LFS."
+            exit 1
+          else
+            echo "✅ No large non-SVG files detected."
+          fi
+          
+      - name: Check for existing assets
+        id: check-assets
+        run: |
+          if [ -d "Sources/DesignAssets/Resources/" ] && find "Sources/DesignAssets/Resources/" -name "*.svg" | grep -q .; then
           echo "assets_exist=true" >> $GITHUB_OUTPUT
           echo "📦 Existing SVG assets detected"
-        else
+          else
           echo "assets_exist=false" >> $GITHUB_OUTPUT
           echo "📭 No existing SVG assets found"
-        fi
+          fi
 
-    - name: Check Figma file status
-      id: check-figma
-      env:
-        FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
-        FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
-      run: |
-        CURRENT_MODIFIED=$(python3 -c "
-        import requests, os
-        token = os.getenv('FIGMA_PERSONAL_TOKEN')
-        file_id = os.getenv('FIGMA_FILE_ID')
-        url = f'https://api.figma.com/v1/files/{file_id}'
-        headers = {'X-Figma-Token': token}
-        response = requests.get(url, headers=headers)
-        data = response.json()
-        print(data.get('lastModified', ''))
-        ")
-        echo "current_modified=$CURRENT_MODIFIED" >> $GITHUB_OUTPUT
-        echo "📅 Current Figma lastModified: $CURRENT_MODIFIED"
+      - name: Check Figma file status
+        id: check-figma
+        env:
+          FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
+          FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
+        run: |
+          CURRENT_MODIFIED=$(python3 -c "
+          import requests, os
+          token = os.getenv('FIGMA_PERSONAL_TOKEN')
+          file_id = os.getenv('FIGMA_FILE_ID')
+          url = f'https://api.figma.com/v1/files/{file_id}'
+          headers = {'X-Figma-Token': token}
+          response = requests.get(url, headers=headers)
+          data = response.json()
+          print(data.get('lastModified', ''))
+          ")
+          echo "current_modified=$CURRENT_MODIFIED" >> $GITHUB_OUTPUT
+          echo "📅 Current Figma lastModified: $CURRENT_MODIFIED"
 
-    - name: Check for changes
-      id: check-changes
-      run: |
-        CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
-        if [ -f ".figma_last_fetch.json" ]; then
+      - name: Check for changes
+        id: check-changes
+        run: |
+          CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
+          if [ -f ".figma_last_fetch.json" ]; then
           LAST_MODIFIED=$(jq -r '.lastModified' .figma_last_fetch.json)
           if [ "$CURRENT_MODIFIED" == "$LAST_MODIFIED" ]; then
             echo "no_changes=true" >> $GITHUB_OUTPUT
@@ -73,63 +90,63 @@ jobs:
             echo "no_changes=false" >> $GITHUB_OUTPUT
             echo "🔄 Changes detected: $LAST_MODIFIED → $CURRENT_MODIFIED"
           fi
-        else
+          else
           echo "no_changes=false" >> $GITHUB_OUTPUT
           echo "🆕 First run - no previous timestamp found"
-        fi
+          fi
 
-    - name: Fetch icons from Figma
-      if: github.event.inputs.force_refresh == 'true' || steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false'
-      env:
-        FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
-        FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
-        FORCE_DOWNLOAD: ${{ github.event.inputs.force_refresh }}
-      run: |
-        echo "🚀 Manual icon fetch triggered"
-        if [ "${{ github.event.inputs.force_refresh }}" == "true" ]; then
-          echo "🔄 Force refresh enabled - will re-download all icons"
-        elif [ "${{ steps.check-assets.outputs.assets_exist }}" == "true" ] && [ "${{ steps.check-changes.outputs.no_changes }}" == "true" ]; then
-          echo "⏭️ Skipping fetch - assets exist and no changes detected"
-        else
-          echo "🔄 Fetching due to missing assets or detected changes"
-        fi
-        python3 fetch_icons_advanced.py
+      - name: Fetch icons from Figma
+        if: github.event.inputs.force_refresh == 'true' || steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false'
+        env:
+          FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
+          FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
+          FORCE_DOWNLOAD: ${{ github.event.inputs.force_refresh }}
+        run: |
+          echo "🚀 Manual icon fetch triggered"
+          if [ "${{ github.event.inputs.force_refresh }}" == "true" ]; then
+            echo "🔄 Force refresh enabled - will re-download all icons"
+          elif [ "${{ steps.check-assets.outputs.assets_exist }}" == "true" ] && [ "${{ steps.check-changes.outputs.no_changes }}" == "true" ]; then
+            echo "⏭️ Skipping fetch - assets exist and no changes detected"
+          else
+            echo "🔄 Fetching due to missing assets or detected changes"
+          fi
+          python3 fetch_icons_advanced.py
 
-    - name: Update last fetch timestamp
-      if: success() && (github.event.inputs.force_refresh == 'true' || steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false')
-      run: |
-        CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
-        echo "{\"lastModified\": \"$CURRENT_MODIFIED\"}" > .figma_last_fetch.json
-        echo "💾 Updated last fetch timestamp: $CURRENT_MODIFIED"
-        
-    - name: Set up Swift manually
-      run: |
-        # Download and install Swift 5.8 manually to avoid GPG issues
-        wget -q https://download.swift.org/swift-5.8-release/ubuntu2204/swift-5.8-RELEASE/swift-5.8-RELEASE-ubuntu22.04.tar.gz
-        tar xzf swift-5.8-RELEASE-ubuntu22.04.tar.gz
-        echo "$PWD/swift-5.8-RELEASE-ubuntu22.04/usr/bin" >> $GITHUB_PATH
-        echo "SWIFT_ROOT=$PWD/swift-5.8-RELEASE-ubuntu22.04/usr" >> $GITHUB_ENV
+      - name: Update last fetch timestamp
+        if: success() && (github.event.inputs.force_refresh == 'true' || steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false')
+        run: |
+          CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
+          echo "{\"lastModified\": \"$CURRENT_MODIFIED\"}" > .figma_last_fetch.json
+          echo "💾 Updated last fetch timestamp: $CURRENT_MODIFIED"
+          
+      - name: Set up Swift manually
+        run: |
+          # Download and install Swift 5.8 manually to avoid GPG issues
+          wget -q https://download.swift.org/swift-5.8-release/ubuntu2204/swift-5.8-RELEASE/swift-5.8-RELEASE-ubuntu22.04.tar.gz
+          tar xzf swift-5.8-RELEASE-ubuntu22.04.tar.gz
+          echo "$PWD/swift-5.8-RELEASE-ubuntu22.04/usr/bin" >> $GITHUB_PATH
+          echo "SWIFT_ROOT=$PWD/swift-5.8-RELEASE-ubuntu22.04/usr" >> $GITHUB_ENV
 
-    - name: Generate Swift code from assets
-      run: |
-        echo "🔧 Generating Swift code from downloaded assets..."
-        swift package plugin --allow-writing-to-package-directory generate-enums
+      - name: Generate Swift code from assets
+        run: |
+          echo "🔧 Generating Swift code from downloaded assets..."
+          swift package plugin --allow-writing-to-package-directory generate-enums
 
-    - name: Build package
-      run: |
-        echo "🔨 Building package..."
-        swift build
-        
-    - name: Show results
-      run: |
-        echo "## 📊 Manual Fetch Results" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Asset Counts:" >> $GITHUB_STEP_SUMMARY
-        for category in Flags Icons Images Logos Map Illustrations; do
+      - name: Build package
+        run: |
+          echo "🔨 Building package..."
+          swift build
+          
+      - name: Show results
+        run: |
+          echo "## 📊 Manual Fetch Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Asset Counts:" >> $GITHUB_STEP_SUMMARY
+          for category in Flags Icons Images Logos Map Illustrations; do
           count=$(find Sources/DesignAssets/Resources/${category}.xcassets -name "*.imageset" 2>/dev/null | wc -l)
           echo "- **${category}**: ${count} icons" >> $GITHUB_STEP_SUMMARY
-        done
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Files Updated:" >> $GITHUB_STEP_SUMMARY
-        echo "- Asset catalogs in \`Sources/DesignAssets/Resources/\`" >> $GITHUB_STEP_SUMMARY
-        echo "- Generated Swift code: \`Sources/DesignAssets/GeneratedIcons.swift\`" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Updated:" >> $GITHUB_STEP_SUMMARY
+          echo "- Asset catalogs in \`Sources/DesignAssets/Resources/\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Generated Swift code: \`Sources/DesignAssets/GeneratedIcons.swift\`" >> $GITHUB_STEP_SUMMARY

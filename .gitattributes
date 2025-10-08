@@ -1,3 +1,7 @@
+# SVG files (Design Assets)
+*.svg filter=lfs diff=lfs merge=lfs -text
+
+# Large binary files
 *.dll filter=lfs diff=lfs merge=lfs -text
 *.exe filter=lfs diff=lfs merge=lfs -text
 *.tar.gz filter=lfs diff=lfs merge=lfs -text
