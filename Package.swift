@@ -11,6 +11,7 @@ let package = Package(
         .target(
           name: "DesignAssets",
           dependencies: [],
+          path: "Sources/DesignAssets",
           resources: [
             .process("Resources")
           ],
@@ -20,12 +21,14 @@ let package = Package(
         ),
     .testTarget(
       name: "DesignAssetsTests",
-      dependencies: ["DesignAssets"]
+      dependencies: ["DesignAssets"],
+      path: "Tests/DesignAssetsTests"
     ),
     .plugin(
         name: "GenerateEnumsPlugin",
         capability: .buildTool(),
-        dependencies: []
+        dependencies: [],
+        path: "Plugins/GenerateEnumsPlugin"
     ),
   ]
 )
