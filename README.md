@@ -13,6 +13,8 @@ A clean, lightweight Swift Package Manager package for consuming design assets f
 - **🌐 Cross-Platform Ready**: Same assets can be consumed by any platform
 - **🔄 Zero Configuration**: Just add the package and build
 - **⚡ Type-Safe Access**: Compile-time checking for all icons
+- **🚀 Remote Package Compatible**: Works seamlessly when added remotely from GitHub
+- **📁 No Git LFS Dependency**: All SVG files stored directly in Git for better compatibility
 
 ## 🏗️ Architecture & Flow
 
@@ -72,6 +74,8 @@ graph TD
    ```
 4. **Select "Add Package"**
 5. **Choose your target** and click "Add Package"
+
+**✅ Remote Package Resolution**: This package works seamlessly when added remotely - no Git LFS or additional setup required!
 
 ### **Option B: Using Package.swift**
 
@@ -469,6 +473,16 @@ Icons are automatically categorized using advanced categorization with weighted 
    - Ensure environment variables are set correctly
    - Check that the Python script has write permissions
 
+7. **"git-lfs: command not found" error (RESOLVED)**
+   - ✅ **Fixed**: All SVG files are now stored directly in Git
+   - ✅ **No Git LFS required**: Package works without Git LFS installation
+   - ✅ **Remote compatibility**: Works seamlessly when added remotely
+
+8. **"public headers include directory" error (RESOLVED)**
+   - ✅ **Fixed**: Package.swift updated for better remote resolution
+   - ✅ **Explicit paths**: All targets have explicit paths for compatibility
+   - ✅ **Platform compatibility**: Lowered requirements to iOS 13, macOS 10.15
+
 ### **Debug Mode**
 
 Enable debug logging:
@@ -496,6 +510,26 @@ python3 fetch_icons_advanced.py
 - ✅ **Smart caching** - Only updates when Figma changes
 - ✅ **Pull Request workflow** - Automated updates via PRs
 - ✅ **Swift 5.8** - Compatible toolchain for optimal performance
+- ✅ **Remote Package Compatible** - Works seamlessly when added remotely from GitHub
+- ✅ **No Git LFS Dependency** - All SVG files stored directly in Git
+- ✅ **Fixed Package Resolution** - Resolved "public headers include directory" errors
+
+## 🆕 Recent Improvements
+
+### **Remote Package Compatibility (Latest)**
+
+- ✅ **Fixed Git LFS Issues**: Migrated all SVG files from Git LFS to regular Git storage
+- ✅ **Resolved Package Resolution**: Fixed "public headers include directory" errors
+- ✅ **Improved Compatibility**: Lowered platform requirements to iOS 13, macOS 10.15
+- ✅ **No Dependencies**: Package works without Git LFS or additional tools
+- ✅ **Seamless Remote Addition**: Works perfectly when added remotely from GitHub
+
+### **What This Means for You**
+
+- **No Setup Required**: Just add the package URL and it works
+- **Better Performance**: Faster package resolution without LFS overhead
+- **Universal Compatibility**: Works on any system without Git LFS installation
+- **Reliable Assets**: All SVG files are guaranteed to be available
 
 ## 🚀 Next Steps
 
