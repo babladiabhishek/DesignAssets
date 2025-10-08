@@ -1,5 +1,5 @@
-# SVG files (Design Assets)
-*.svg filter=lfs diff=lfs merge=lfs -text
+# SVG files (Design Assets) - Removed from LFS for better package compatibility
+# *.svg filter=lfs diff=lfs merge=lfs -text
 
 # Large binary files
 *.dll filter=lfs diff=lfs merge=lfs -text
