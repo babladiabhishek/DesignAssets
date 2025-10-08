@@ -15,186 +15,203 @@ jobs:
       pull-requests: write
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          lfs: true
       
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests fuzzywuzzy python-levenshtein
-        
-    - name: Check for existing assets
-      id: check-assets
-      run: |
-        if [ -d "Sources/DesignAssets/Resources/" ] && find "Sources/DesignAssets/Resources/" -name "*.svg" | grep -q .; then
-          echo "assets_exist=true" >> $GITHUB_OUTPUT
-          echo "📦 Existing SVG assets detected"
-        else
-          echo "assets_exist=false" >> $GITHUB_OUTPUT
-          echo "📭 No existing SVG assets found"
-        fi
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: Check Figma file status
-      id: check-figma
-      env:
-        FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
-        FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
-      run: |
-        CURRENT_MODIFIED=$(python3 -c "
-        import requests, os
-        token = os.getenv('FIGMA_PERSONAL_TOKEN')
-        file_id = os.getenv('FIGMA_FILE_ID')
-        url = f'https://api.figma.com/v1/files/{file_id}'
-        headers = {'X-Figma-Token': token}
-        response = requests.get(url, headers=headers)
-        data = response.json()
-        print(data.get('lastModified', ''))
-        ")
-        echo "current_modified=$CURRENT_MODIFIED" >> $GITHUB_OUTPUT
-        echo "📅 Current Figma lastModified: $CURRENT_MODIFIED"
+      - name: Install Python dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install requests fuzzywuzzy
 
-    - name: Check for changes
-      id: check-changes
-      run: |
-        CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
-        if [ -f ".figma_last_fetch.json" ]; then
-          LAST_MODIFIED=$(jq -r '.lastModified' .figma_last_fetch.json)
-          if [ "$CURRENT_MODIFIED" == "$LAST_MODIFIED" ]; then
-            echo "no_changes=true" >> $GITHUB_OUTPUT
-            echo "✅ No changes detected since $LAST_MODIFIED"
+      - name: Install Git LFS
+        run: |
+            sudo apt-get update
+            sudo apt-get install git-lfs
+            git lfs install
+
+      - name: Check for Large Non-LFS Files
+        run: |
+            echo "🔍 Checking for large files that should be tracked with Git LFS..."
+            if find Sources/DesignAssets/Resources -type f -not -path "*.git/*" -size +100M | grep -v ".svg"; then
+              echo "❌ Error: Non-SVG files larger than 100MB detected. Remove or track with Git LFS."
+              exit 1
+            else
+              echo "✅ No large non-SVG files detected."
+            fi
+          
+      - name: Check for existing assets
+          id: check-assets
+        run: |
+            if [ -d "Sources/DesignAssets/Resources/" ] && find "Sources/DesignAssets/Resources/" -name "*.svg" | grep -q .; then
+              echo "assets_exist=true" >> $GITHUB_OUTPUT
+              echo "📦 Existing SVG assets detected"
+            else
+              echo "assets_exist=false" >> $GITHUB_OUTPUT
+              echo "📭 No existing SVG assets found"
+            fi
+
+      - name: Check Figma file status
+          id: check-figma
+          env:
+            FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
+            FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
+        run: |
+            CURRENT_MODIFIED=$(python3 -c "
+            import requests, os
+            token = os.getenv('FIGMA_PERSONAL_TOKEN')
+            file_id = os.getenv('FIGMA_FILE_ID')
+            url = f'https://api.figma.com/v1/files/{file_id}'
+            headers = {'X-Figma-Token': token}
+            response = requests.get(url, headers=headers)
+            data = response.json()
+            print(data.get('lastModified', ''))
+            ")
+            echo "current_modified=$CURRENT_MODIFIED" >> $GITHUB_OUTPUT
+            echo "📅 Current Figma lastModified: $CURRENT_MODIFIED"
+
+      - name: Check for changes
+          id: check-changes
+        run: |
+            CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
+            if [ -f ".figma_last_fetch.json" ]; then
+              LAST_MODIFIED=$(jq -r '.lastModified' .figma_last_fetch.json)
+              if [ "$CURRENT_MODIFIED" == "$LAST_MODIFIED" ]; then
+                echo "no_changes=true" >> $GITHUB_OUTPUT
+                echo "✅ No changes detected since $LAST_MODIFIED"
+              else
+                echo "no_changes=false" >> $GITHUB_OUTPUT
+                echo "🔄 Changes detected: $LAST_MODIFIED → $CURRENT_MODIFIED"
+              fi
+            else
+              echo "no_changes=false" >> $GITHUB_OUTPUT
+              echo "🆕 First run - no previous timestamp found"
+            fi
+
+      - name: Fetch icons from Figma
+        if: steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false'
+        env:
+          FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
+          FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
+        run: |
+          echo "🚀 Starting automated icon fetch from production Figma..."
+          python3 fetch_icons_advanced.py
+
+      - name: Update last fetch timestamp
+        if: success() && (steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false')
+        run: |
+          CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
+          echo "{\"lastModified\": \"$CURRENT_MODIFIED\"}" > .figma_last_fetch.json
+          echo "💾 Updated last fetch timestamp: $CURRENT_MODIFIED"
+          
+      - name: Set up Swift manually
+        run: |
+          # Download and install Swift 5.8 manually to avoid GPG issues
+          wget -q https://download.swift.org/swift-5.8-release/ubuntu2204/swift-5.8-RELEASE/swift-5.8-RELEASE-ubuntu22.04.tar.gz
+          tar xzf swift-5.8-RELEASE-ubuntu22.04.tar.gz
+          echo "$PWD/swift-5.8-RELEASE-ubuntu22.04/usr/bin" >> $GITHUB_PATH
+          echo "SWIFT_ROOT=$PWD/swift-5.8-RELEASE-ubuntu22.04/usr" >> $GITHUB_ENV
+
+      - name: Generate Swift code from assets
+        run: |
+          echo "🔧 Generating Swift code from downloaded assets..."
+          swift package plugin --allow-writing-to-package-directory generate-enums
+
+      - name: Build package
+        run: |
+          echo "🔨 Building package..."
+          swift build
+          
+      - name: Check for changes
+          id: changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected in assets or generated code"
           else
-            echo "no_changes=false" >> $GITHUB_OUTPUT
-            echo "🔄 Changes detected: $LAST_MODIFIED → $CURRENT_MODIFIED"
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes detected"
           fi
-        else
-          echo "no_changes=false" >> $GITHUB_OUTPUT
-          echo "🆕 First run - no previous timestamp found"
-        fi
-
-    - name: Fetch icons from Figma
-      if: steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false'
-      env:
-        FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }}
-        FIGMA_PERSONAL_TOKEN: ${{ secrets.FIGMA_PERSONAL_TOKEN }}
-      run: |
-        echo "🚀 Starting automated icon fetch from production Figma..."
-        python3 fetch_icons_advanced.py
-
-    - name: Update last fetch timestamp
-      if: success() && (steps.check-assets.outputs.assets_exist == 'false' || steps.check-changes.outputs.no_changes == 'false')
-      run: |
-        CURRENT_MODIFIED="${{ steps.check-figma.outputs.current_modified }}"
-        echo "{\"lastModified\": \"$CURRENT_MODIFIED\"}" > .figma_last_fetch.json
-        echo "💾 Updated last fetch timestamp: $CURRENT_MODIFIED"
-        
-    - name: Set up Swift manually
-      run: |
-        # Download and install Swift 5.8 manually to avoid GPG issues
-        wget -q https://download.swift.org/swift-5.8-release/ubuntu2204/swift-5.8-RELEASE/swift-5.8-RELEASE-ubuntu22.04.tar.gz
-        tar xzf swift-5.8-RELEASE-ubuntu22.04.tar.gz
-        echo "$PWD/swift-5.8-RELEASE-ubuntu22.04/usr/bin" >> $GITHUB_PATH
-        echo "SWIFT_ROOT=$PWD/swift-5.8-RELEASE-ubuntu22.04/usr" >> $GITHUB_ENV
-
-    - name: Generate Swift code from assets
-      run: |
-        echo "🔧 Generating Swift code from downloaded assets..."
-        swift package plugin --allow-writing-to-package-directory generate-enums
-
-    - name: Build package
-      run: |
-        echo "🔨 Building package..."
-        swift build
-        
-    - name: Check for changes
-      id: changes
-      run: |
-        if [ -n "$(git status --porcelain)" ]; then
-          echo "changes=true" >> $GITHUB_OUTPUT
-          echo "📝 Changes detected in assets or generated code"
-        else
-          echo "changes=false" >> $GITHUB_OUTPUT
-          echo "✅ No changes detected"
-        fi
-        
-    - name: Create Pull Request with icon updates
-      id: create-pr
-      if: steps.changes.outputs.changes == 'true'
+          
+      - name: Create Pull Request with icon updates
+          id: create-pr
+          if: steps.changes.outputs.changes == 'true'
       uses: peter-evans/create-pull-request@v7
-      with:
-        token: ${{ secrets.PAT_TOKEN }}
-        commit-message: |
-          🤖 Auto-update icons from production Figma
+          with:
+          token: ${{ secrets.PAT_TOKEN }}
+          commit-message: |
+            🤖 Auto-update icons from production Figma
 
-          - Fetched latest icons using advanced categorization
-          - Updated asset catalogs and generated Swift code
-          - Generated by GitHub Actions workflow
+            - Fetched latest icons using advanced categorization
+            - Updated asset catalogs and generated Swift code
+            - Generated by GitHub Actions workflow
+            
+            Categories updated:
+            - Flags: $(find Sources/DesignAssets/Resources/Flags.xcassets -name "*.imageset" | wc -l) icons
+            - Icons: $(find Sources/DesignAssets/Resources/Icons.xcassets -name "*.imageset" | wc -l) icons  
+            - Images: $(find Sources/DesignAssets/Resources/Images.xcassets -name "*.imageset" | wc -l) icons
+            - Logos: $(find Sources/DesignAssets/Resources/Logos.xcassets -name "*.imageset" | wc -l) icons
+            - Map: $(find Sources/DesignAssets/Resources/Map.xcassets -name "*.imageset" | wc -l) icons
+            - Illustrations: $(find Sources/DesignAssets/Resources/Illustrations.xcassets -name "*.imageset" | wc -l) icons
+          title: "🤖 Auto-update icons from production Figma"
+          body: |
+            ## 🎨 Icon Library Update
+            
+            This PR contains automated updates to the icon library from the production Figma file.
+            
+            ### 📊 Changes
+            - Fetched latest icons using advanced categorization
+            - Updated asset catalogs and generated Swift code
+            - Generated by GitHub Actions workflow
+            
+            ### 📁 Updated Categories
+            - Flags: $(find Sources/DesignAssets/Resources/Flags.xcassets -name "*.imageset" | wc -l) icons
+            - Icons: $(find Sources/DesignAssets/Resources/Icons.xcassets -name "*.imageset" | wc -l) icons  
+            - Images: $(find Sources/DesignAssets/Resources/Images.xcassets -name "*.imageset" | wc -l) icons
+            - Logos: $(find Sources/DesignAssets/Resources/Logos.xcassets -name "*.imageset" | wc -l) icons
+            - Map: $(find Sources/DesignAssets/Resources/Map.xcassets -name "*.imageset" | wc -l) icons
+            - Illustrations: $(find Sources/DesignAssets/Resources/Illustrations.xcassets -name "*.imageset" | wc -l) icons
+            
+            ### 🔄 Auto-generated
+            This PR was automatically created by the GitHub Actions workflow.
+          branch: auto-update-icons-${{ github.run_number }}
+          delete-branch: true
+          labels: |
+            automated
+            icons
+            figma
+          draft: false
           
-          Categories updated:
-          - Flags: $(find Sources/DesignAssets/Resources/Flags.xcassets -name "*.imageset" | wc -l) icons
-          - Icons: $(find Sources/DesignAssets/Resources/Icons.xcassets -name "*.imageset" | wc -l) icons  
-          - Images: $(find Sources/DesignAssets/Resources/Images.xcassets -name "*.imageset" | wc -l) icons
-          - Logos: $(find Sources/DesignAssets/Resources/Logos.xcassets -name "*.imageset" | wc -l) icons
-          - Map: $(find Sources/DesignAssets/Resources/Map.xcassets -name "*.imageset" | wc -l) icons
-          - Illustrations: $(find Sources/DesignAssets/Resources/Illustrations.xcassets -name "*.imageset" | wc -l) icons
-        title: "🤖 Auto-update icons from production Figma"
-        body: |
-          ## 🎨 Icon Library Update
-          
-          This PR contains automated updates to the icon library from the production Figma file.
-          
-          ### 📊 Changes
-          - Fetched latest icons using advanced categorization
-          - Updated asset catalogs and generated Swift code
-          - Generated by GitHub Actions workflow
-          
-          ### 📁 Updated Categories
-          - Flags: $(find Sources/DesignAssets/Resources/Flags.xcassets -name "*.imageset" | wc -l) icons
-          - Icons: $(find Sources/DesignAssets/Resources/Icons.xcassets -name "*.imageset" | wc -l) icons  
-          - Images: $(find Sources/DesignAssets/Resources/Images.xcassets -name "*.imageset" | wc -l) icons
-          - Logos: $(find Sources/DesignAssets/Resources/Logos.xcassets -name "*.imageset" | wc -l) icons
-          - Map: $(find Sources/DesignAssets/Resources/Map.xcassets -name "*.imageset" | wc -l) icons
-          - Illustrations: $(find Sources/DesignAssets/Resources/Illustrations.xcassets -name "*.imageset" | wc -l) icons
-          
-          ### 🔄 Auto-generated
-          This PR was automatically created by the GitHub Actions workflow.
-        branch: auto-update-icons-${{ github.run_number }}
-        delete-branch: true
-        labels: |
-          automated
-          icons
-          figma
-        draft: false
-        
-    - name: Create summary
-      run: |
-        echo "## 🎉 Icon Fetch Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        if [ "${{ steps.create-pr.outputs.pull-request-number }}" != "" ]; then
-          echo "### 📋 Pull Request Created" >> $GITHUB_STEP_SUMMARY
-          echo "- **PR #${{ steps.create-pr.outputs.pull-request-number }}**: [${{ steps.create-pr.outputs.pull-request-url }}](${{ steps.create-pr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY
-          echo "- **Operation**: ${{ steps.create-pr.outputs.pull-request-operation }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ steps.create-pr.outputs.pull-request-branch }}" >> $GITHUB_STEP_SUMMARY
+      - name: Create summary
+        run: |
+          echo "## 🎉 Icon Fetch Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-        fi
-        echo "### 📊 Results:" >> $GITHUB_STEP_SUMMARY
-        echo "- **Flags**: $(find Sources/DesignAssets/Resources/Flags.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
-        echo "- **Icons**: $(find Sources/DesignAssets/Resources/Icons.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
-        echo "- **Images**: $(find Sources/DesignAssets/Resources/Images.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
-        echo "- **Logos**: $(find Sources/DesignAssets/Resources/Logos.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
-        echo "- **Map**: $(find Sources/DesignAssets/Resources/Map.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
-        echo "- **Illustrations**: $(find Sources/DesignAssets/Resources/Illustrations.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔄 Status:" >> $GITHUB_STEP_SUMMARY
-        if [ "${{ steps.changes.outputs.changes }}" == "true" ]; then
-          echo "✅ Changes detected and committed to repository" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "ℹ️ No changes detected - assets are up to date" >> $GITHUB_STEP_SUMMARY
-        fi
+          if [ "${{ steps.create-pr.outputs.pull-request-number }}" != "" ]; then
+            echo "### 📋 Pull Request Created" >> $GITHUB_STEP_SUMMARY
+            echo "- **PR #${{ steps.create-pr.outputs.pull-request-number }}**: [${{ steps.create-pr.outputs.pull-request-url }}](${{ steps.create-pr.outputs.pull-request-url }})" >> $GITHUB_STEP_SUMMARY
+            echo "- **Operation**: ${{ steps.create-pr.outputs.pull-request-operation }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Branch**: ${{ steps.create-pr.outputs.pull-request-branch }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "### 📊 Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Flags**: $(find Sources/DesignAssets/Resources/Flags.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
+          echo "- **Icons**: $(find Sources/DesignAssets/Resources/Icons.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
+          echo "- **Images**: $(find Sources/DesignAssets/Resources/Images.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
+          echo "- **Logos**: $(find Sources/DesignAssets/Resources/Logos.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
+          echo "- **Map**: $(find Sources/DesignAssets/Resources/Map.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
+          echo "- **Illustrations**: $(find Sources/DesignAssets/Resources/Illustrations.xcassets -name "*.imageset" 2>/dev/null | wc -l) icons" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 Status:" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.changes.outputs.changes }}" == "true" ]; then
+            echo "✅ Changes detected and committed to repository" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No changes detected - assets are up to date" >> $GITHUB_STEP_SUMMARY
+          fi

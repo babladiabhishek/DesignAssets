@@ -5,6 +5,8 @@ import json
 import os
 import time
 import logging
+import hashlib
+import subprocess
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Optional
@@ -38,6 +40,50 @@ def setup_environment() -> bool:
     os.makedirs(Config.TEMP_DIR, exist_ok=True)
     os.makedirs(Config.OUTPUT_DIR, exist_ok=True)
     return True
+
+def compute_file_hash(file_path: str) -> Optional[str]:
+    """Compute SHA256 hash of a file."""
+    if not os.path.exists(file_path):
+        return None
+    try:
+        sha256 = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                sha256.update(chunk)
+        return sha256.hexdigest()
+    except Exception as e:
+        logger.warning(f"Failed to compute hash for {file_path}: {e}")
+        return None
+
+def get_main_branch_file_hash(file_path: str) -> Optional[str]:
+    """Get the hash of a file in the main branch using git show."""
+    try:
+        # Use git show to get the file content from main branch
+        result = subprocess.run(
+            ["git", "show", f"origin/main:{file_path}"],
+            capture_output=True,
+            text=False,
+            check=True
+        )
+        sha256 = hashlib.sha256()
+        sha256.update(result.stdout)
+        return sha256.hexdigest()
+    except subprocess.CalledProcessError:
+        # File doesn't exist in main branch
+        return None
+    except Exception as e:
+        logger.warning(f"Failed to get main branch hash for {file_path}: {e}")
+        return None
+
+def is_file_unchanged(file_path: str) -> bool:
+    """Check if a file is unchanged compared to main branch."""
+    current_hash = compute_file_hash(file_path)
+    main_hash = get_main_branch_file_hash(file_path)
+    
+    if current_hash is None or main_hash is None:
+        return False  # File doesn't exist or can't compute hash
+    
+    return current_hash == main_hash
 
 def fetch_file_metadata(file_id: str, token: str) -> dict:
     """Fetch Figma file metadata with retry logic."""
@@ -255,13 +301,17 @@ def process_icon_batch(file_id: str, token: str, batch: List[dict], category: st
         original_name = icon['original_name']
         layer = icon['layer']
         
-        # Check if imageset already exists (smart caching)
+        # Check if imageset already exists and is unchanged (smart caching)
         imageset_dir = f"{Config.OUTPUT_DIR}/{category}.xcassets/{clean_name}.imageset"
         svg_filepath = f"{imageset_dir}/{clean_name}.svg"
         
         if not force_download and os.path.exists(svg_filepath):
-            logger.info(f"⏭️ Skipping existing icon: {clean_name} (not forced)")
-            return True, None
+            # Check if file is unchanged compared to main branch
+            if is_file_unchanged(svg_filepath):
+                logger.info(f"⏭️ Skipping unchanged icon: {clean_name} (hash matches main branch)")
+                return True, None
+            else:
+                logger.info(f"🔄 Icon changed: {clean_name} (hash differs from main branch)")
         
         if node_id in images and images[node_id]:
             svg_path = os.path.join(Config.TEMP_DIR, f"{clean_name}.svg")
