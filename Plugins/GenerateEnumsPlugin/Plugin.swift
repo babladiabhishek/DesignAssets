@@ -58,6 +58,7 @@ extension GenerateEnumsPlugin: XcodeBuildToolPlugin {
     func createBuildCommands(context: XcodePluginContext, target: XcodeTarget) throws -> [Command] {
         let logName = "GenerateEnumsPlugin(XcodeBuildToolPlugin)"
 
+        // For remote packages, we need to find the Resources directory relative to the project
         let resourcesDir = context.xcodeProject.directory.appending(subpath: "Sources/DesignAssets/Resources")
         let allIcons = scanForIcons(in: resourcesDir.string)
 
